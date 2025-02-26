@@ -14,14 +14,29 @@ import { useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { NodePalette } from './NodePalette';
+import { WorkflowNavigation } from './WorkflowNavigation';
 import { BaseNode } from './nodes/BaseNode';
 import { useToast } from '@/hooks/use-toast';
 import '@xyflow/react/dist/style.css';
 
 const nodeTypes = {
-  trigger: BaseNode,
-  action: BaseNode,
-  condition: BaseNode,
+  input: BaseNode,
+  output: BaseNode,
+  text: BaseNode,
+  'llm-openai': BaseNode,
+  'llm-anthropic': BaseNode,
+  'llm-perplexity': BaseNode,
+  'logic-if': BaseNode,
+  'logic-switch': BaseNode,
+  'logic-loop': BaseNode,
+  'trigger-webhook': BaseNode,
+  'trigger-schedule': BaseNode,
+  'data-csv': BaseNode,
+  'data-api': BaseNode,
+  'data-db': BaseNode,
+  'transform-map': BaseNode,
+  'transform-filter': BaseNode,
+  'transform-reduce': BaseNode,
 };
 
 export function WorkflowBuilder() {
@@ -30,136 +45,55 @@ export function WorkflowBuilder() {
   const queryClient = useQueryClient();
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  const [activeCategory, setActiveCategory] = useState('general');
 
-  // Fetch workflow data
+  // Fetch workflow
   const { data: workflow, isLoading } = useQuery({
     queryKey: ['workflow', id],
     queryFn: async () => {
-      const { data: workflowData, error: workflowError } = await supabase
+      const { data, error } = await supabase
         .from('workflows')
         .select('*')
         .eq('id', id)
         .single();
 
-      if (workflowError) throw workflowError;
-
-      const { data: nodesData, error: nodesError } = await supabase
-        .from('workflow_nodes')
-        .select('*')
-        .eq('workflow_id', id);
-
-      if (nodesError) throw nodesError;
-
-      const { data: edgesData, error: edgesError } = await supabase
-        .from('workflow_edges')
-        .select('*')
-        .eq('workflow_id', id);
-
-      if (edgesError) throw edgesError;
-
-      return {
-        ...workflowData,
-        nodes: nodesData.map((node) => ({
-          id: node.id,
-          type: node.node_type,
-          position: node.position,
-          data: {
-            label: node.label,
-            type: node.trigger_type || node.action_type || node.condition_type,
-          },
-        })),
-        edges: edgesData.map((edge) => ({
-          id: edge.id,
-          source: edge.source_node_id,
-          target: edge.target_node_id,
-          label: edge.condition,
-        })),
-      };
+      if (error) throw error;
+      return data;
     },
   });
 
-  // Save workflow mutation
-  const saveWorkflow = useMutation({
-    mutationFn: async () => {
-      // Save nodes
-      const { error: nodesError } = await supabase
-        .from('workflow_nodes')
-        .upsert(
-          nodes.map((node) => ({
-            id: node.id,
-            workflow_id: id,
-            node_type: node.type,
-            position: node.position,
-            label: node.data.label,
-            [node.type === 'trigger' ? 'trigger_type' : 
-             node.type === 'action' ? 'action_type' : 
-             'condition_type']: node.data.type,
-          }))
-        );
+  // Update workflow mutation
+  const updateWorkflow = useMutation({
+    mutationFn: async (updates: any) => {
+      const { error } = await supabase
+        .from('workflows')
+        .update(updates)
+        .eq('id', id);
 
-      if (nodesError) throw nodesError;
-
-      // Save edges
-      const { error: edgesError } = await supabase
-        .from('workflow_edges')
-        .upsert(
-          edges.map((edge) => ({
-            id: edge.id,
-            workflow_id: id,
-            source_node_id: edge.source,
-            target_node_id: edge.target,
-            condition: edge.label,
-          }))
-        );
-
-      if (edgesError) throw edgesError;
+      if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['workflow', id] });
       toast({
-        title: 'Success',
-        description: 'Workflow saved successfully.',
+        title: "Success",
+        description: "Workflow updated successfully.",
       });
     },
     onError: (error) => {
       toast({
-        title: 'Error',
-        description: 'Failed to save workflow.',
-        variant: 'destructive',
+        title: "Error",
+        description: "Failed to update workflow.",
+        variant: "destructive",
       });
     },
   });
 
-  const updateNode = useCallback((nodeId: string, updates: any) => {
-    setNodes((nds) =>
-      nds.map((node) => {
-        if (node.id === nodeId) {
-          return {
-            ...node,
-            ...updates,
-          };
-        }
-        return node;
-      })
-    );
-  }, [setNodes]);
-
-  // Update nodeTypes to pass updateNode
-  const nodeTypes = {
-    trigger: (props: any) => <BaseNode {...props} onUpdate={updateNode} />,
-    action: (props: any) => <BaseNode {...props} onUpdate={updateNode} />,
-    condition: (props: any) => <BaseNode {...props} onUpdate={updateNode} />,
-  };
-
   const onConnect = useCallback(
-    (params: Connection) => setEdges((eds) => addEdge(params, eds)),
+    (params: Connection) => {
+      setEdges((eds) => addEdge(params, eds));
+    },
     [setEdges]
   );
-
-  const onDragOver = useCallback((event: React.DragEvent) => {
-    event.preventDefault();
-    event.dataTransfer.dropEffect = 'move';
-  }, []);
 
   const onDragStart = useCallback((event: React.DragEvent, nodeType: string) => {
     event.dataTransfer.setData('application/reactflow', nodeType);
@@ -180,9 +114,9 @@ export function WorkflowBuilder() {
 
       const newNode: Node = {
         id: crypto.randomUUID(),
-        type: type.split('-')[0],
+        type,
         position,
-        data: { label: type.split('-')[1], type: type.split('-')[1] },
+        data: { label: type.split('-')[1] || type },
       };
 
       setNodes((nds) => nds.concat(newNode));
@@ -190,28 +124,42 @@ export function WorkflowBuilder() {
     [setNodes]
   );
 
+  const onDragOver = useCallback((event: React.DragEvent) => {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'move';
+  }, []);
+
   if (isLoading) {
     return <div>Loading...</div>;
   }
 
   return (
-    <div className="h-[calc(100vh-10rem)] flex">
-      <NodePalette onDragStart={onDragStart} />
-      <div className="flex-1">
-        <ReactFlow
-          nodes={nodes}
-          edges={edges}
-          onNodesChange={onNodesChange}
-          onEdgesChange={onEdgesChange}
-          onConnect={onConnect}
-          onDrop={onDrop}
-          onDragOver={onDragOver}
-          nodeTypes={nodeTypes}
-          fitView
-        >
-          <Background />
-          <Controls />
-        </ReactFlow>
+    <div className="flex flex-col h-[calc(100vh-4rem)]">
+      <WorkflowNavigation 
+        activeCategory={activeCategory}
+        onCategoryChange={setActiveCategory}
+      />
+      <div className="flex flex-1">
+        <NodePalette 
+          category={activeCategory}
+          onDragStart={onDragStart}
+        />
+        <div className="flex-1">
+          <ReactFlow
+            nodes={nodes}
+            edges={edges}
+            onNodesChange={onNodesChange}
+            onEdgesChange={onEdgesChange}
+            onConnect={onConnect}
+            onDrop={onDrop}
+            onDragOver={onDragOver}
+            nodeTypes={nodeTypes}
+            fitView
+          >
+            <Background />
+            <Controls />
+          </ReactFlow>
+        </div>
       </div>
     </div>
   );
