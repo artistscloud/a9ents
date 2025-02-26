@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
-import { Activity, Bot, Box, Workflow } from "lucide-react";
+import { Activity, Bot, Box, Workflow, HardDrive } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, LineChart, Line, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 
 type Profile = Database['public']['Tables']['profiles']['Row'];
@@ -20,6 +20,10 @@ const Dashboard = () => {
   const [creditUsage, setCreditUsage] = useState({
     used: 750,
     total: 1000,
+  });
+  const [storageUsage, setStorageUsage] = useState({
+    used: 2.5, // in GB
+    total: 5, // in GB
   });
 
   // Sample data for charts - replace with real data from your backend
@@ -79,6 +83,7 @@ const Dashboard = () => {
   }
 
   const creditPercentage = (creditUsage.used / creditUsage.total) * 100;
+  const storagePercentage = (storageUsage.used / storageUsage.total) * 100;
 
   return (
     <div className="animate-in space-y-8">
@@ -87,7 +92,7 @@ const Dashboard = () => {
       </h1>
       
       {/* Stats Cards */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-5">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Agents</CardTitle>
@@ -132,6 +137,18 @@ const Dashboard = () => {
             <div className="text-2xl font-bold">{creditUsage.used}/{creditUsage.total}</div>
             <Progress value={creditPercentage} className="mt-2" />
             <p className="text-xs text-muted-foreground mt-2">Credits Remaining: {creditUsage.total - creditUsage.used}</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Storage Usage</CardTitle>
+            <HardDrive className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{storageUsage.used}/{storageUsage.total} GB</div>
+            <Progress value={storagePercentage} className="mt-2" />
+            <p className="text-xs text-muted-foreground mt-2">Storage Remaining: {(storageUsage.total - storageUsage.used).toFixed(1)} GB</p>
           </CardContent>
         </Card>
       </div>
