@@ -75,6 +75,27 @@ export type Database = {
         }
         Relationships: []
       }
+      site_notifications: {
+        Row: {
+          active: boolean | null
+          created_at: string
+          id: string
+          message: string
+        }
+        Insert: {
+          active?: boolean | null
+          created_at?: string
+          id?: string
+          message: string
+        }
+        Update: {
+          active?: boolean | null
+          created_at?: string
+          id?: string
+          message?: string
+        }
+        Relationships: []
+      }
       tools: {
         Row: {
           created_at: string | null
