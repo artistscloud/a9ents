@@ -6,10 +6,18 @@ import { Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { WorkflowCard } from "@/components/workflows/WorkflowCard";
+import { WorkflowBuilder } from "@/components/workflows/builder/WorkflowBuilder";
+import { useParams } from "react-router-dom";
 
 export default function Workflows() {
+  const { id } = useParams();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // If we have an ID, show the workflow builder
+  if (id) {
+    return <WorkflowBuilder />;
+  }
 
   // Fetch workflows
   const { data: workflows = [], isLoading } = useQuery({

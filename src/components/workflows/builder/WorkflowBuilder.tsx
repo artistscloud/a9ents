@@ -12,12 +12,11 @@ import {
   useNodesState,
 } from '@xyflow/react';
 import { useParams } from 'react-router-dom';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { NodePalette } from './NodePalette';
 import { WorkflowNavigation } from './WorkflowNavigation';
 import { BaseNode } from './nodes/BaseNode';
-import { useToast } from '@/hooks/use-toast';
 import '@xyflow/react/dist/style.css';
 
 const nodeTypes = {
@@ -36,13 +35,10 @@ const nodeTypes = {
 
 export function WorkflowBuilder() {
   const { id } = useParams<{ id: string }>();
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [activeCategory, setActiveCategory] = useState('general');
 
-  // Fetch workflow
   const { data: workflow, isLoading } = useQuery({
     queryKey: ['workflow', id],
     queryFn: async () => {
@@ -50,7 +46,7 @@ export function WorkflowBuilder() {
         .from('workflows')
         .select('*')
         .eq('id', id)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
       return data;
@@ -97,11 +93,15 @@ export function WorkflowBuilder() {
   }, []);
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return <div>Loading workflow...</div>;
+  }
+
+  if (!workflow) {
+    return <div>Workflow not found</div>;
   }
 
   return (
-    <div className="flex flex-col h-[calc(100vh-4rem)]">
+    <div className="flex flex-col h-[calc(100vh-8rem)]">
       <WorkflowNavigation 
         activeCategory={activeCategory}
         onCategoryChange={setActiveCategory}
@@ -111,7 +111,7 @@ export function WorkflowBuilder() {
           category={activeCategory}
           onDragStart={onDragStart}
         />
-        <div className="flex-1">
+        <div className="flex-1 relative">
           <ReactFlow
             nodes={nodes}
             edges={edges}
