@@ -37,23 +37,38 @@ export type Database = {
         Row: {
           content: string | null
           created_at: string | null
+          file_path: string | null
+          file_type: string | null
           id: string
+          source_type: string
           tags: string[] | null
           title: string
+          url: string | null
+          user_id: string | null
         }
         Insert: {
           content?: string | null
           created_at?: string | null
+          file_path?: string | null
+          file_type?: string | null
           id?: string
+          source_type?: string
           tags?: string[] | null
           title: string
+          url?: string | null
+          user_id?: string | null
         }
         Update: {
           content?: string | null
           created_at?: string | null
+          file_path?: string | null
+          file_type?: string | null
           id?: string
+          source_type?: string
           tags?: string[] | null
           title?: string
+          url?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }

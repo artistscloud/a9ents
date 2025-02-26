@@ -11,6 +11,7 @@ import Index from "./pages/Index";
 import Agents from "./pages/Agents";
 import Tools from "./pages/Tools";
 import Workflows from "./pages/Workflows";
+import Knowledgebase from "./pages/Knowledgebase";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -51,6 +52,14 @@ const App = () => (
           element={
             <AuthLayout>
               <Workflows />
+            </AuthLayout>
+          }
+        />
+        <Route
+          path="/knowledgebase"
+          element={
+            <AuthLayout>
+              <Knowledgebase />
             </AuthLayout>
           }
         />
