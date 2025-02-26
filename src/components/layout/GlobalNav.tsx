@@ -4,11 +4,28 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ChevronDown, HelpCircle, Settings, UserCircle } from "lucide-react";
 
 export function GlobalNav() {
   const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   useEffect(() => {
     // Get initial session
@@ -67,9 +84,72 @@ export function GlobalNav() {
                   <span className="text-sm text-muted-foreground">
                     {user.email}
                   </span>
-                  <Button variant="outline" onClick={handleSignOut}>
-                    Sign Out
-                  </Button>
+                  <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="outline" size="sm">
+                          Account
+                          <ChevronDown className="ml-2 h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-48">
+                        <DialogTrigger asChild>
+                          <DropdownMenuItem>
+                            <Settings className="mr-2 h-4 w-4" />
+                            Settings
+                          </DropdownMenuItem>
+                        </DialogTrigger>
+                        <DropdownMenuItem onSelect={() => navigate('/help')}>
+                          <HelpCircle className="mr-2 h-4 w-4" />
+                          Help
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onSelect={handleSignOut}>
+                          Sign Out
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+
+                    <DialogContent className="sm:max-w-[500px]">
+                      <DialogHeader>
+                        <DialogTitle>Settings</DialogTitle>
+                      </DialogHeader>
+                      <Tabs defaultValue="profile" className="mt-4">
+                        <TabsList className="grid w-full grid-cols-3">
+                          <TabsTrigger value="profile">Profile</TabsTrigger>
+                          <TabsTrigger value="subscription">Subscription</TabsTrigger>
+                          <TabsTrigger value="general">General</TabsTrigger>
+                        </TabsList>
+                        <TabsContent value="profile" className="space-y-4 mt-4">
+                          <div className="flex items-center gap-4">
+                            <UserCircle className="h-20 w-20 text-muted-foreground" />
+                            <div>
+                              <h4 className="font-medium">{user.email}</h4>
+                              <p className="text-sm text-muted-foreground">
+                                Update your profile information
+                              </p>
+                            </div>
+                          </div>
+                        </TabsContent>
+                        <TabsContent value="subscription" className="space-y-4 mt-4">
+                          <div className="space-y-2">
+                            <h4 className="font-medium">Current Plan</h4>
+                            <p className="text-sm text-muted-foreground">
+                              Free Plan
+                            </p>
+                          </div>
+                        </TabsContent>
+                        <TabsContent value="general" className="space-y-4 mt-4">
+                          <div className="space-y-2">
+                            <h4 className="font-medium">General Settings</h4>
+                            <p className="text-sm text-muted-foreground">
+                              Manage your general preferences
+                            </p>
+                          </div>
+                        </TabsContent>
+                      </Tabs>
+                    </DialogContent>
+                  </Dialog>
                 </div>
               ) : (
                 <>
