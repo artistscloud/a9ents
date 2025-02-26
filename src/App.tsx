@@ -2,8 +2,9 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/sonner";
-import { MainLayout } from "./components/layout/MainLayout";
+import { AuthLayout } from "./components/layout/AuthLayout";
 
+import Landing from "./pages/Landing";
 import Index from "./pages/Index";
 import Agents from "./pages/Agents";
 import Tools from "./pages/Tools";
@@ -15,17 +16,44 @@ const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <BrowserRouter>
-      <MainLayout>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/agents" element={<Agents />} />
-          <Route path="/tools" element={<Tools />} />
-          <Route path="/workflows" element={<Workflows />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </MainLayout>
+      <Routes>
+        <Route path="/" element={<Landing />} />
+        <Route
+          path="/dashboard"
+          element={
+            <AuthLayout>
+              <Index />
+            </AuthLayout>
+          }
+        />
+        <Route
+          path="/agents"
+          element={
+            <AuthLayout>
+              <Agents />
+            </AuthLayout>
+          }
+        />
+        <Route
+          path="/tools"
+          element={
+            <AuthLayout requireAdmin>
+              <Tools />
+            </AuthLayout>
+          }
+        />
+        <Route
+          path="/workflows"
+          element={
+            <AuthLayout>
+              <Workflows />
+            </AuthLayout>
+          }
+        />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+      <Toaster />
     </BrowserRouter>
-    <Toaster />
   </QueryClientProvider>
 );
 
