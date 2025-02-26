@@ -1,6 +1,7 @@
 
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { GlobalNav } from "./GlobalNav";
+import { SiteNotification } from "./SiteNotification";
 import { Link } from "react-router-dom";
 
 interface MainLayoutProps {
@@ -36,6 +37,8 @@ export function MainLayout({ children }: MainLayoutProps) {
             </div>
           </div>
         </nav>
+
+        <SiteNotification />
 
         <main className="flex-1 p-6">
           {children}

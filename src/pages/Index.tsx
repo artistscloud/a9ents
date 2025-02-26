@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
@@ -57,7 +56,7 @@ const Dashboard = () => {
 
   return (
     <div className="animate-in">
-      <h1 className="text-4xl font-bold mb-8">
+      <h1 className="text-2xl font-bold mb-4">
         {isAdmin ? "Admin Dashboard" : "Dashboard"}
       </h1>
       
