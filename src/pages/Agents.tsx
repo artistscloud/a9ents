@@ -3,15 +3,17 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CreateAgentModal } from "@/components/agents/CreateAgentModal";
 
 const Agents = () => {
   const [agents, setAgents] = useState([]);
+  const [createModalOpen, setCreateModalOpen] = useState(false);
 
   return (
     <div className="animate-in">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-4xl font-bold">Agents</h1>
-        <Button>
+        <Button onClick={() => setCreateModalOpen(true)}>
           <Plus className="h-4 w-4 mr-2" />
           New Agent
         </Button>
@@ -42,6 +44,11 @@ const Agents = () => {
           ))
         )}
       </div>
+
+      <CreateAgentModal 
+        open={createModalOpen}
+        onOpenChange={setCreateModalOpen}
+      />
     </div>
   );
 };
