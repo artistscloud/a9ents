@@ -1,6 +1,5 @@
 
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Input as InputIcon, Output as OutputIcon, Brain, Database, Webhook, FileText, Share2, SplitSquareVertical, Transform } from "lucide-react";
 
 interface WorkflowNavigationProps {
   activeCategory: string;
@@ -15,12 +14,9 @@ export function WorkflowNavigation({ activeCategory, onCategoryChange }: Workflo
           <TabsList className="w-full justify-start">
             <TabsTrigger value="general">General</TabsTrigger>
             <TabsTrigger value="llms">LLMs</TabsTrigger>
-            <TabsTrigger value="knowledge">Knowledge Base</TabsTrigger>
-            <TabsTrigger value="integrations">Integrations</TabsTrigger>
-            <TabsTrigger value="triggers">Triggers</TabsTrigger>
-            <TabsTrigger value="data">Data Loaders</TabsTrigger>
             <TabsTrigger value="logic">Logic</TabsTrigger>
-            <TabsTrigger value="transform">Data Transformation</TabsTrigger>
+            <TabsTrigger value="triggers">Triggers</TabsTrigger>
+            <TabsTrigger value="data">Data</TabsTrigger>
           </TabsList>
         </Tabs>
       </div>

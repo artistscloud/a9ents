@@ -1,3 +1,4 @@
+
 import { useCallback, useState } from 'react';
 import {
   ReactFlow,
@@ -22,21 +23,15 @@ import '@xyflow/react/dist/style.css';
 const nodeTypes = {
   input: BaseNode,
   output: BaseNode,
-  text: BaseNode,
   'llm-openai': BaseNode,
   'llm-anthropic': BaseNode,
   'llm-perplexity': BaseNode,
   'logic-if': BaseNode,
   'logic-switch': BaseNode,
-  'logic-loop': BaseNode,
   'trigger-webhook': BaseNode,
   'trigger-schedule': BaseNode,
   'data-csv': BaseNode,
-  'data-api': BaseNode,
   'data-db': BaseNode,
-  'transform-map': BaseNode,
-  'transform-filter': BaseNode,
-  'transform-reduce': BaseNode,
 };
 
 export function WorkflowBuilder() {
@@ -62,36 +57,8 @@ export function WorkflowBuilder() {
     },
   });
 
-  // Update workflow mutation
-  const updateWorkflow = useMutation({
-    mutationFn: async (updates: any) => {
-      const { error } = await supabase
-        .from('workflows')
-        .update(updates)
-        .eq('id', id);
-
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['workflow', id] });
-      toast({
-        title: "Success",
-        description: "Workflow updated successfully.",
-      });
-    },
-    onError: (error) => {
-      toast({
-        title: "Error",
-        description: "Failed to update workflow.",
-        variant: "destructive",
-      });
-    },
-  });
-
   const onConnect = useCallback(
-    (params: Connection) => {
-      setEdges((eds) => addEdge(params, eds));
-    },
+    (params: Connection) => setEdges((eds) => addEdge(params, eds)),
     [setEdges]
   );
 

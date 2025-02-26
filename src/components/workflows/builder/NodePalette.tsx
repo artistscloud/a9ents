@@ -1,7 +1,16 @@
 
 import { Button } from "@/components/ui/button";
-import { Input as InputIcon, Output as OutputIcon, Brain, Database, Webhook, 
-         FileText, Share2, SplitSquareVertical, Transform, MessageSquare } from "lucide-react";
+import { 
+  ArrowDownToLine, 
+  ArrowUpFromLine, 
+  Brain, 
+  Database, 
+  CircuitBoard,
+  FileText, 
+  Globe, 
+  GitFork, 
+  Timer 
+} from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface NodePaletteProps {
@@ -12,9 +21,8 @@ interface NodePaletteProps {
 export function NodePalette({ category, onDragStart }: NodePaletteProps) {
   const nodesByCategory = {
     general: [
-      { type: 'input', label: 'Input', icon: InputIcon, description: 'Pass data into your workflow' },
-      { type: 'output', label: 'Output', icon: OutputIcon, description: 'Output data from your workflow' },
-      { type: 'text', label: 'Text', icon: FileText, description: 'Add text content' },
+      { type: 'input', label: 'Input', icon: ArrowDownToLine, description: 'Starting point of your workflow' },
+      { type: 'output', label: 'Output', icon: ArrowUpFromLine, description: 'End point of your workflow' },
     ],
     llms: [
       { type: 'llm-openai', label: 'OpenAI', icon: Brain, description: 'Use OpenAI models' },
@@ -22,24 +30,17 @@ export function NodePalette({ category, onDragStart }: NodePaletteProps) {
       { type: 'llm-perplexity', label: 'Perplexity', icon: Brain, description: 'Use Perplexity AI' },
     ],
     logic: [
-      { type: 'logic-if', label: 'If Condition', icon: SplitSquareVertical, description: 'Add conditional logic' },
-      { type: 'logic-switch', label: 'Switch', icon: SplitSquareVertical, description: 'Multiple conditions' },
-      { type: 'logic-loop', label: 'Loop', icon: Transform, description: 'Iterate over data' },
+      { type: 'logic-if', label: 'If Condition', icon: GitFork, description: 'Add conditional logic' },
+      { type: 'logic-switch', label: 'Switch', icon: CircuitBoard, description: 'Multiple conditions' },
     ],
     triggers: [
-      { type: 'trigger-webhook', label: 'Webhook', icon: Webhook, description: 'Trigger via HTTP webhook' },
-      { type: 'trigger-schedule', label: 'Schedule', icon: Clock, description: 'Time-based trigger' },
+      { type: 'trigger-webhook', label: 'Webhook', icon: Globe, description: 'Trigger via HTTP webhook' },
+      { type: 'trigger-schedule', label: 'Timer', icon: Timer, description: 'Time-based trigger' },
     ],
     data: [
       { type: 'data-csv', label: 'CSV', icon: FileText, description: 'Load CSV data' },
-      { type: 'data-api', label: 'API', icon: Share2, description: 'Fetch API data' },
       { type: 'data-db', label: 'Database', icon: Database, description: 'Query database' },
-    ],
-    transform: [
-      { type: 'transform-map', label: 'Map', icon: Transform, description: 'Transform data structure' },
-      { type: 'transform-filter', label: 'Filter', icon: Transform, description: 'Filter data' },
-      { type: 'transform-reduce', label: 'Reduce', icon: Transform, description: 'Aggregate data' },
-    ],
+    ]
   };
 
   const nodes = nodesByCategory[category as keyof typeof nodesByCategory] || [];
