@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -19,7 +18,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ChevronDown, HelpCircle, Settings, UserCircle } from "lucide-react";
+import { ChevronDown, HelpCircle, LayoutDashboard, Settings, UserCircle } from "lucide-react";
 
 export function GlobalNav() {
   const navigate = useNavigate();
@@ -93,6 +92,11 @@ export function GlobalNav() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="w-48">
+                        <DropdownMenuItem onSelect={() => navigate('/dashboard')}>
+                          <LayoutDashboard className="mr-2 h-4 w-4" />
+                          Dashboard
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
                         <DialogTrigger asChild>
                           <DropdownMenuItem>
                             <Settings className="mr-2 h-4 w-4" />
