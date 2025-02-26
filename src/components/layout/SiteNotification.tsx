@@ -2,6 +2,13 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
+type SiteNotification = {
+  id: string;
+  message: string;
+  active: boolean;
+  created_at: string;
+};
+
 export function SiteNotification() {
   const [message, setMessage] = useState<string | null>(null);
 
@@ -9,9 +16,9 @@ export function SiteNotification() {
     const fetchNotification = async () => {
       const { data, error } = await supabase
         .from('site_notifications')
-        .select('message')
+        .select('*')
         .eq('active', true)
-        .single();
+        .maybeSingle();
 
       if (!error && data) {
         setMessage(data.message);
@@ -23,12 +30,13 @@ export function SiteNotification() {
     // Subscribe to changes
     const channel = supabase
       .channel('site_notifications')
-      .on('postgres_changes', 
-        { 
-          event: '*', 
-          schema: 'public', 
-          table: 'site_notifications' 
-        }, 
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'site_notifications',
+        },
         () => {
           fetchNotification();
         }
