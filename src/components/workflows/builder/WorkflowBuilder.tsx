@@ -1,4 +1,3 @@
-
 import { useCallback, useState } from 'react';
 import {
   ReactFlow,
@@ -130,6 +129,27 @@ export function WorkflowBuilder() {
       });
     },
   });
+
+  const updateNode = useCallback((nodeId: string, updates: any) => {
+    setNodes((nds) =>
+      nds.map((node) => {
+        if (node.id === nodeId) {
+          return {
+            ...node,
+            ...updates,
+          };
+        }
+        return node;
+      })
+    );
+  }, [setNodes]);
+
+  // Update nodeTypes to pass updateNode
+  const nodeTypes = {
+    trigger: (props: any) => <BaseNode {...props} onUpdate={updateNode} />,
+    action: (props: any) => <BaseNode {...props} onUpdate={updateNode} />,
+    condition: (props: any) => <BaseNode {...props} onUpdate={updateNode} />,
+  };
 
   const onConnect = useCallback(
     (params: Connection) => setEdges((eds) => addEdge(params, eds)),
