@@ -1,5 +1,5 @@
 
-import { Home, Tool, Users, GitGraph, Database } from "lucide-react";
+import { Home, Settings, Users, GitGraph, Database } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -15,7 +15,7 @@ import { NavLink } from "react-router-dom";
 const menuItems = [
   { title: "Dashboard", icon: Home, path: "/" },
   { title: "Agents", icon: Users, path: "/agents" },
-  { title: "Tools", icon: Tool, path: "/tools" },
+  { title: "Tools", icon: Settings, path: "/tools" },
   { title: "Workflows", icon: GitGraph, path: "/workflows" },
   { title: "Knowledge Base", icon: Database, path: "/knowledge" },
 ];
