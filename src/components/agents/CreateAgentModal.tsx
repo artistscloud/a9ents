@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -9,8 +8,9 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
-import { ImagePlus, Sparkles, Upload, PenLine } from "lucide-react";
+import { ImagePlus, Sparkles, Upload, PenLine, RefreshCcw } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface CreateAgentModalProps {
   open: boolean;
@@ -19,14 +19,88 @@ interface CreateAgentModalProps {
 
 export function CreateAgentModal({ open, onOpenChange }: CreateAgentModalProps) {
   const [loading, setLoading] = useState(false);
+  const [enhancing, setEnhancing] = useState(false);
   const [jobDescription, setJobDescription] = useState("");
   const [exampleOutput, setExampleOutput] = useState("");
-  const [selectedModel, setSelectedModel] = useState("gpt-4o");
+  const [selectedProvider, setSelectedProvider] = useState("openai");
+  const [selectedModel, setSelectedModel] = useState("");
   const [temperature, setTemperature] = useState([0.7]);
   const [maxTokens, setMaxTokens] = useState([2000]);
   const [selectedKnowledgebase, setSelectedKnowledgebase] = useState("");
   const [selectedTools, setSelectedTools] = useState<string[]>([]);
+  const [availableModels, setAvailableModels] = useState<string[]>([]);
   const { toast } = useToast();
+
+  const providers = [
+    { id: "openai", name: "OpenAI" },
+    { id: "anthropic", name: "Anthropic" },
+    { id: "gemini", name: "Google Gemini" },
+    { id: "openrouter", name: "OpenRouter" },
+  ];
+
+  useEffect(() => {
+    const fetchModels = async () => {
+      try {
+        const { data, error } = await supabase.functions.invoke('enhance-agent-prompt', {
+          body: { action: 'getModels', provider: selectedProvider },
+        });
+
+        if (error) throw error;
+        setAvailableModels(data.models);
+        setSelectedModel(data.models[0]); // Select first model by default
+      } catch (error) {
+        console.error('Error fetching models:', error);
+        toast({
+          title: "Error",
+          description: "Failed to fetch available models.",
+          variant: "destructive",
+        });
+      }
+    };
+
+    if (selectedProvider) {
+      fetchModels();
+    }
+  }, [selectedProvider]);
+
+  const handleEnhanceWithAI = async () => {
+    if (!jobDescription) {
+      toast({
+        title: "Missing information",
+        description: "Please provide a job description first.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setEnhancing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('enhance-agent-prompt', {
+        body: { 
+          action: 'enhance',
+          provider: selectedProvider,
+          text: jobDescription 
+        },
+      });
+
+      if (error) throw error;
+      
+      setJobDescription(data.enhancedText);
+      toast({
+        title: "Enhanced successfully",
+        description: "Your description has been enhanced.",
+      });
+    } catch (error) {
+      console.error('Error enhancing text:', error);
+      toast({
+        title: "Error",
+        description: "Failed to enhance the description.",
+        variant: "destructive",
+      });
+    } finally {
+      setEnhancing(false);
+    }
+  };
 
   const handleGenerateWithAI = async () => {
     if (!jobDescription) {
@@ -92,7 +166,19 @@ export function CreateAgentModal({ open, onOpenChange }: CreateAgentModalProps) 
           </div>
 
           <div className="space-y-2">
-            <Label className="text-muted-foreground">(Optional) Provide an example output of this job</Label>
+            <div className="flex items-center justify-between">
+              <Label className="text-muted-foreground">(Optional) Provide an example output of this job</Label>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 px-2 text-xs"
+                onClick={handleEnhanceWithAI}
+                disabled={enhancing}
+              >
+                <RefreshCcw className={`h-3 w-3 mr-1 ${enhancing ? 'animate-spin' : ''}`} />
+                A.I Enhance
+              </Button>
+            </div>
             <Textarea
               placeholder="Enter example output..."
               value={exampleOutput}
@@ -104,14 +190,33 @@ export function CreateAgentModal({ open, onOpenChange }: CreateAgentModalProps) 
 
           <div className="space-y-4">
             <div className="space-y-2">
+              <Label>AI Provider</Label>
+              <Select value={selectedProvider} onValueChange={setSelectedProvider}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select provider" />
+                </SelectTrigger>
+                <SelectContent>
+                  {providers.map((provider) => (
+                    <SelectItem key={provider.id} value={provider.id}>
+                      {provider.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
               <Label>Language Model</Label>
               <Select value={selectedModel} onValueChange={setSelectedModel}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select model" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="gpt-4o">GPT-4 Optimized</SelectItem>
-                  <SelectItem value="gpt-4o-mini">GPT-4 Mini</SelectItem>
+                  {availableModels.map((model) => (
+                    <SelectItem key={model} value={model}>
+                      {model}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
