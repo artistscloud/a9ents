@@ -1,6 +1,6 @@
 
 import { Button } from "@/components/ui/button";
-import { Webhook, Timer, Zap, Brain, Mail, Globe, Tool } from "lucide-react";
+import { Webhook, Timer, Zap, Brain, Mail, Globe, Wrench } from "lucide-react";
 
 interface NodePaletteProps {
   onDragStart: (event: React.DragEvent, nodeType: string) => void;
@@ -17,7 +17,7 @@ export function NodePalette({ onDragStart }: NodePaletteProps) {
     { type: 'action-llm', label: 'AI/LLM', icon: Brain },
     { type: 'action-email', label: 'Email', icon: Mail },
     { type: 'action-api', label: 'API Call', icon: Globe },
-    { type: 'action-tool', label: 'Tool', icon: Tool },
+    { type: 'action-tool', label: 'Tool', icon: Wrench },
   ];
 
   return (

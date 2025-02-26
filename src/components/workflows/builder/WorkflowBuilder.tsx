@@ -1,6 +1,7 @@
 
 import { useCallback, useState } from 'react';
-import ReactFlow, {
+import {
+  ReactFlow,
   addEdge,
   Background,
   Controls,
@@ -140,6 +141,11 @@ export function WorkflowBuilder() {
     event.dataTransfer.dropEffect = 'move';
   }, []);
 
+  const onDragStart = useCallback((event: React.DragEvent, nodeType: string) => {
+    event.dataTransfer.setData('application/reactflow', nodeType);
+    event.dataTransfer.effectAllowed = 'move';
+  }, []);
+
   const onDrop = useCallback(
     (event: React.DragEvent) => {
       event.preventDefault();
@@ -170,7 +176,7 @@ export function WorkflowBuilder() {
 
   return (
     <div className="h-[calc(100vh-10rem)] flex">
-      <NodePalette />
+      <NodePalette onDragStart={onDragStart} />
       <div className="flex-1">
         <ReactFlow
           nodes={nodes}
