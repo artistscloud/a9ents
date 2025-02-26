@@ -1,6 +1,5 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -10,18 +9,25 @@ const corsHeaders = {
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders })
+    return new Response(null, { 
+      headers: corsHeaders,
+      status: 200
+    })
   }
 
   try {
     const { url } = await req.json()
     
     if (!url) {
+      console.error('URL not provided')
       return new Response(
-        JSON.stringify({ error: 'URL is required' }),
+        JSON.stringify({ 
+          success: false,
+          error: 'URL is required' 
+        }),
         { 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 400 
+          status: 200 // Return 200 but with success: false
         }
       )
     }
@@ -32,10 +38,13 @@ serve(async (req) => {
     if (!apiKey) {
       console.error('Firecrawl API key not found')
       return new Response(
-        JSON.stringify({ error: 'Firecrawl API key not configured' }),
+        JSON.stringify({ 
+          success: false,
+          error: 'Firecrawl API key not configured' 
+        }),
         { 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 500 
+          status: 200 // Return 200 but with success: false
         }
       )
     }
@@ -55,19 +64,23 @@ serve(async (req) => {
     if (!response.ok) {
       console.error('Firecrawl API error:', data)
       return new Response(
-        JSON.stringify({ error: data.message || 'Failed to scrape website' }),
+        JSON.stringify({ 
+          success: false,
+          error: data.message || 'Failed to scrape website'
+        }),
         { 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: response.status 
+          status: 200 // Return 200 but with success: false
         }
       )
     }
 
+    // Always return 200 with success: true/false
     return new Response(
       JSON.stringify({
+        success: true,
         title: data.title || url,
-        content: data.content || '',
-        success: true
+        content: data.content || ''
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -78,12 +91,12 @@ serve(async (req) => {
     console.error('Error in scrape-website function:', error)
     return new Response(
       JSON.stringify({ 
-        error: error.message || 'An unexpected error occurred',
-        success: false
+        success: false,
+        error: error.message || 'An unexpected error occurred'
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 500 
+        status: 200 // Return 200 even for errors, but with success: false
       }
     )
   }
