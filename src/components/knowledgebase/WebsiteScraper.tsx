@@ -22,12 +22,19 @@ export function WebsiteScraper({ onSuccess }: WebsiteScraperProps) {
 
     setLoading(true);
     try {
-      const { data: scrapeData, error: scrapeError } = await supabase.functions
+      const { data: scrapeResponse, error: scrapeError } = await supabase.functions
         .invoke('scrape-website', {
           body: { url },
         });
 
-      if (scrapeError) throw scrapeError;
+      if (scrapeError) {
+        console.error('Scraping error:', scrapeError);
+        throw new Error(scrapeError.message || 'Failed to scrape website');
+      }
+
+      if (!scrapeResponse || !scrapeResponse.success) {
+        throw new Error(scrapeResponse?.error || 'Failed to scrape website');
+      }
 
       const user = (await supabase.auth.getUser()).data.user;
       if (!user) throw new Error("Not authenticated");
@@ -35,14 +42,17 @@ export function WebsiteScraper({ onSuccess }: WebsiteScraperProps) {
       const { error: insertError } = await supabase
         .from('knowledgebase')
         .insert({
-          title: scrapeData.title || url,
-          content: scrapeData.content,
+          title: scrapeResponse.title || url,
+          content: scrapeResponse.content || '',
           source_type: 'website',
           url: url,
           user_id: user.id
         });
 
-      if (insertError) throw insertError;
+      if (insertError) {
+        console.error('Database insert error:', insertError);
+        throw insertError;
+      }
 
       toast({
         title: "Success",
@@ -53,7 +63,7 @@ export function WebsiteScraper({ onSuccess }: WebsiteScraperProps) {
       console.error('Scraping error:', error);
       toast({
         title: "Error",
-        description: "Failed to scrape website",
+        description: error instanceof Error ? error.message : "Failed to scrape website",
         variant: "destructive",
       });
     } finally {
