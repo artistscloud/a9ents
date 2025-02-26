@@ -12,6 +12,7 @@ const dashboardLinks = [
   { href: "/agents", label: "Agents" },
   { href: "/workflows", label: "Workflows" },
   { href: "/tools", label: "Tools" },
+  { href: "/knowledgebase", label: "Knowledgebase" },
 ];
 
 export function MainLayout({ children }: MainLayoutProps) {
