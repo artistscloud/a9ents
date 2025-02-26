@@ -135,24 +135,123 @@ export type Database = {
         }
         Relationships: []
       }
+      workflow_edges: {
+        Row: {
+          condition: string | null
+          created_at: string
+          id: string
+          source_node_id: string | null
+          target_node_id: string | null
+          workflow_id: string | null
+        }
+        Insert: {
+          condition?: string | null
+          created_at?: string
+          id?: string
+          source_node_id?: string | null
+          target_node_id?: string | null
+          workflow_id?: string | null
+        }
+        Update: {
+          condition?: string | null
+          created_at?: string
+          id?: string
+          source_node_id?: string | null
+          target_node_id?: string | null
+          workflow_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workflow_edges_source_node_id_fkey"
+            columns: ["source_node_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_nodes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workflow_edges_target_node_id_fkey"
+            columns: ["target_node_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_nodes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workflow_edges_workflow_id_fkey"
+            columns: ["workflow_id"]
+            isOneToOne: false
+            referencedRelation: "workflows"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workflow_nodes: {
+        Row: {
+          action_type: Database["public"]["Enums"]["action_type"] | null
+          condition_type: Database["public"]["Enums"]["condition_type"] | null
+          created_at: string
+          data: Json | null
+          id: string
+          label: string | null
+          node_type: Database["public"]["Enums"]["workflow_node_type"]
+          position: Json | null
+          trigger_type: Database["public"]["Enums"]["trigger_type"] | null
+          workflow_id: string | null
+        }
+        Insert: {
+          action_type?: Database["public"]["Enums"]["action_type"] | null
+          condition_type?: Database["public"]["Enums"]["condition_type"] | null
+          created_at?: string
+          data?: Json | null
+          id?: string
+          label?: string | null
+          node_type: Database["public"]["Enums"]["workflow_node_type"]
+          position?: Json | null
+          trigger_type?: Database["public"]["Enums"]["trigger_type"] | null
+          workflow_id?: string | null
+        }
+        Update: {
+          action_type?: Database["public"]["Enums"]["action_type"] | null
+          condition_type?: Database["public"]["Enums"]["condition_type"] | null
+          created_at?: string
+          data?: Json | null
+          id?: string
+          label?: string | null
+          node_type?: Database["public"]["Enums"]["workflow_node_type"]
+          position?: Json | null
+          trigger_type?: Database["public"]["Enums"]["trigger_type"] | null
+          workflow_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workflow_nodes_workflow_id_fkey"
+            columns: ["workflow_id"]
+            isOneToOne: false
+            referencedRelation: "workflows"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       workflows: {
         Row: {
           created_at: string | null
           id: string
           name: string
           steps: Json | null
+          user_id: string | null
         }
         Insert: {
           created_at?: string | null
           id?: string
           name: string
           steps?: Json | null
+          user_id?: string | null
         }
         Update: {
           created_at?: string | null
           id?: string
           name?: string
           steps?: Json | null
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -164,7 +263,11 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
+      action_type: "api" | "email" | "agent" | "llm" | "tool"
+      condition_type: "if" | "switch" | "wait"
+      trigger_type: "webhook" | "schedule" | "manual" | "event"
       user_role: "admin" | "user"
+      workflow_node_type: "trigger" | "action" | "condition"
     }
     CompositeTypes: {
       [_ in never]: never

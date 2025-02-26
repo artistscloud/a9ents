@@ -28,9 +28,15 @@ export default function Workflows() {
   // Create workflow mutation
   const createWorkflow = useMutation({
     mutationFn: async () => {
+      const { data: userData } = await supabase.auth.getUser();
+      if (!userData.user) throw new Error('User not authenticated');
+
       const { data, error } = await supabase
         .from('workflows')
-        .insert([{ name: 'New Workflow' }])
+        .insert([{ 
+          name: 'New Workflow',
+          user_id: userData.user.id
+        }])
         .select()
         .single();
 
@@ -82,6 +88,9 @@ export default function Workflows() {
   // Duplicate workflow mutation
   const duplicateWorkflow = useMutation({
     mutationFn: async (id: string) => {
+      const { data: userData } = await supabase.auth.getUser();
+      if (!userData.user) throw new Error('User not authenticated');
+
       // First get the workflow to duplicate
       const { data: workflow, error: fetchError } = await supabase
         .from('workflows')
@@ -96,7 +105,8 @@ export default function Workflows() {
         .from('workflows')
         .insert([{
           name: `${workflow.name} (Copy)`,
-          steps: workflow.steps
+          steps: workflow.steps,
+          user_id: userData.user.id
         }]);
 
       if (insertError) throw insertError;
