@@ -1,38 +1,9 @@
 
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { supabase } from "@/integrations/supabase/client";
 
 export default function Landing() {
-  const [loading, setLoading] = useState(false);
-
-  const handleLogin = async (provider?: 'github' | 'google') => {
-    try {
-      setLoading(true);
-      if (provider) {
-        await supabase.auth.signInWithOAuth({
-          provider,
-          options: {
-            redirectTo: `${window.location.origin}/dashboard`,
-          },
-        });
-      } else {
-        // Redirect to login page for email login
-        window.location.href = '/login';
-      }
-    } catch (error) {
-      console.error('Error:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const navigate = useNavigate();
 
   return (
     <div className="min-h-screen bg-background">
@@ -66,25 +37,10 @@ export default function Landing() {
             </div>
 
             <div className="flex items-center gap-4">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline">
-                    {loading ? "Loading..." : "Sign In"}
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuItem onSelect={() => handleLogin()}>
-                    Email Sign In
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onSelect={() => handleLogin('github')}>
-                    Continue with GitHub
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onSelect={() => handleLogin('google')}>
-                    Continue with Google
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-              <Button onClick={() => window.location.href = '/signup'}>
+              <Button variant="outline" onClick={() => navigate('/login')}>
+                Sign In
+              </Button>
+              <Button onClick={() => navigate('/signup')}>
                 Sign Up
               </Button>
             </div>
@@ -101,13 +57,13 @@ export default function Landing() {
             Your AI Agent Automation Platform
           </p>
           <div className="mt-10 flex items-center justify-center gap-x-6">
-            <Button size="lg" onClick={() => window.location.href = '/signup'}>
+            <Button size="lg" onClick={() => navigate('/signup')}>
               Get started
             </Button>
             <Button 
               size="lg" 
               variant="outline"
-              onClick={() => window.location.href = '/about'}
+              onClick={() => navigate('/about')}
             >
               Learn more
             </Button>

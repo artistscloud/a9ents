@@ -5,6 +5,8 @@ import { Toaster } from "@/components/ui/sonner";
 import { AuthLayout } from "./components/layout/AuthLayout";
 
 import Landing from "./pages/Landing";
+import Login from "./pages/Login";
+import SignUp from "./pages/SignUp";
 import Index from "./pages/Index";
 import Agents from "./pages/Agents";
 import Tools from "./pages/Tools";
@@ -18,6 +20,8 @@ const App = () => (
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Landing />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<SignUp />} />
         <Route
           path="/dashboard"
           element={
