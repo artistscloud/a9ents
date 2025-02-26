@@ -3,6 +3,9 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { MainLayout } from "./MainLayout";
+import type { Database } from "@/integrations/supabase/types";
+
+type Profile = Database['public']['Tables']['profiles']['Row'];
 
 interface AuthLayoutProps {
   children: React.ReactNode;
