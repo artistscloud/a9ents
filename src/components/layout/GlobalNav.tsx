@@ -1,9 +1,34 @@
 
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
+import type { User } from "@supabase/supabase-js";
 
 export function GlobalNav() {
   const navigate = useNavigate();
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+      setLoading(false);
+    });
+
+    // Listen for authentication state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    navigate('/');
+  };
   
   return (
     <nav className="border-b bg-background">
@@ -36,12 +61,27 @@ export function GlobalNav() {
           </div>
 
           <div className="flex items-center gap-4">
-            <Button variant="outline" onClick={() => navigate('/login')}>
-              Sign In
-            </Button>
-            <Button onClick={() => navigate('/signup')}>
-              Sign Up
-            </Button>
+            {!loading && (
+              user ? (
+                <div className="flex items-center gap-4">
+                  <span className="text-sm text-muted-foreground">
+                    {user.email}
+                  </span>
+                  <Button variant="outline" onClick={handleSignOut}>
+                    Sign Out
+                  </Button>
+                </div>
+              ) : (
+                <>
+                  <Button variant="outline" onClick={() => navigate('/login')}>
+                    Sign In
+                  </Button>
+                  <Button onClick={() => navigate('/signup')}>
+                    Sign Up
+                  </Button>
+                </>
+              )
+            )}
           </div>
         </div>
       </div>
