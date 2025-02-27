@@ -1,30 +1,91 @@
 
 import { Handle, Position, useReactFlow } from '@xyflow/react';
 import { 
-  ArrowDownToLine, 
+  ArrowDownToLine,
   ArrowUpFromLine, 
-  Brain, 
-  Database, 
+  Brain,
+  Database,
   CircuitBoard,
-  FileText, 
-  Globe, 
-  GitFork, 
+  FileText,
+  Globe,
+  GitFork,
   Timer,
-  X
+  Image,
+  Headphones,
+  FileJson,
+  List,
+  FileUp,
+  Wand2,
+  Bell,
+  TrendingUp,
+  MessageSquare,
+  Table,
+  Download,
+  PencilRuler,
+  Play,
+  Save,
+  StickyNote,
+  X,
+  ArrowLeftRight,
+  Merge,
+  Clock,
+  Database as TTSQL,
+  Braces,
+  FileAudio,
+  Grid,
 } from "lucide-react";
 
 const nodeIcons: Record<string, any> = {
+  // General
   'input': ArrowDownToLine,
   'output': ArrowUpFromLine,
+  'text': FileText,
+  'pipeline': Play,
+  'transform': PencilRuler,
+  'file-save': Save,
+  'note': StickyNote,
+
+  // LLMs
   'llm-openai': Brain,
   'llm-anthropic': Brain,
   'llm-perplexity': Brain,
-  'logic-if': GitFork,
-  'logic-switch': CircuitBoard,
-  'trigger-webhook': Globe,
-  'trigger-schedule': Timer,
+
+  // Knowledge Base
+  'kb-reader': FileText,
+  'kb-writer': FileUp,
+  'kb-search': Database,
+
+  // Multi-Modal
+  'audio': Headphones,
+  'image': Image,
+
+  // Logic
+  'logic-condition': ArrowLeftRight,
+  'logic-merge': Merge,
+  'logic-time': Clock,
+  'logic-ttsql': TTSQL,
+
+  // Data Transformation
+  'text-ops': FileText,
+  'json-ops': Braces,
+  'list-ops': List,
+  'file-ops': FileUp,
+  'ai-ops': Wand2,
+  'notifications': Bell,
+  'data-enrichment': TrendingUp,
+
+  // Chat
+  'chat-memory': MessageSquare,
+  'data-collector': Table,
+  'chat-file-reader': Download,
+
+  // Data Loaders
   'data-csv': FileText,
   'data-db': Database,
+  'data-audio': FileAudio,
+
+  // Integrations
+  'integration-grid': Grid,
 };
 
 interface BaseNodeProps {
