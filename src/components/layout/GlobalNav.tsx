@@ -77,26 +77,6 @@ export function GlobalNav() {
                     <Shield className="mr-2 h-4 w-4" />
                     Admin Panel
                   </DropdownMenuItem>
-                  <DropdownMenuItem onSelect={() => navigate('/tools')}>
-                    <Settings className="mr-2 h-4 w-4" />
-                    Tools
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onSelect={() => navigate('/agents')}>
-                    <Key className="mr-2 h-4 w-4" />
-                    Agents
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onSelect={() => navigate('/workflows')}>
-                    <FileText className="mr-2 h-4 w-4" />
-                    Workflows
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onSelect={() => navigate('/knowledgebase')}>
-                    <Book className="mr-2 h-4 w-4" />
-                    Knowledge Base
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onSelect={() => navigate('/docs')}>
-                    <HelpCircle className="mr-2 h-4 w-4" />
-                    Documentation
-                  </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onSelect={handleSignOut}>
                     Sign Out
