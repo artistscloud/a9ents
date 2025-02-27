@@ -3,8 +3,11 @@ import { useEffect, useState } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
+import { useLLM } from "@/hooks/use-llm";
+import { Database } from "@/integrations/supabase/types";
+
+type LLMProvider = Database["public"]["Enums"]["llm_provider"];
 
 interface AgentModelSettingsProps {
   selectedProvider: string;
@@ -29,29 +32,52 @@ export function AgentModelSettings({
 }: AgentModelSettingsProps) {
   const { toast } = useToast();
   const [availableModels, setAvailableModels] = useState<string[]>([]);
+  const { getAvailableProviders } = useLLM();
+  const [providers, setProviders] = useState<LLMProvider[]>([]);
 
-  const providers = [
-    { id: "openai", name: "OpenAI" },
-    { id: "anthropic", name: "Anthropic" },
-    { id: "gemini", name: "Google Gemini" },
-    { id: "openrouter", name: "OpenRouter" },
-  ];
+  useEffect(() => {
+    const loadProviders = async () => {
+      try {
+        const availableProviders = await getAvailableProviders();
+        setProviders(availableProviders);
+        
+        // Set first available provider as default if none selected
+        if (!selectedProvider && availableProviders.length > 0) {
+          onProviderChange(availableProviders[0]);
+        }
+      } catch (error) {
+        console.error('Error loading providers:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load available LLM providers",
+          variant: "destructive",
+        });
+      }
+    };
+
+    loadProviders();
+  }, []);
 
   useEffect(() => {
     const fetchModels = async () => {
-      try {
-        const { data, error } = await supabase.functions.invoke('enhance-agent-prompt', {
-          body: { action: 'getModels', provider: selectedProvider },
-        });
+      if (!selectedProvider) return;
 
-        if (error) throw error;
+      try {
+        const response = await fetch(`/functions/llm-${selectedProvider}/models`);
+        if (!response.ok) throw new Error('Failed to fetch models');
+        
+        const data = await response.json();
         setAvailableModels(data.models);
-        onModelChange(data.models[0]); // Select first model by default
+        
+        // Set first available model as default if none selected
+        if (data.models.length > 0 && !selectedModel) {
+          onModelChange(data.models[0]);
+        }
       } catch (error) {
         console.error('Error fetching models:', error);
         toast({
           title: "Error",
-          description: "Failed to fetch available models.",
+          description: "Failed to fetch available models",
           variant: "destructive",
         });
       }
@@ -72,8 +98,8 @@ export function AgentModelSettings({
           </SelectTrigger>
           <SelectContent>
             {providers.map((provider) => (
-              <SelectItem key={provider.id} value={provider.id}>
-                {provider.name}
+              <SelectItem key={provider} value={provider}>
+                {provider.charAt(0).toUpperCase() + provider.slice(1)}
               </SelectItem>
             ))}
           </SelectContent>

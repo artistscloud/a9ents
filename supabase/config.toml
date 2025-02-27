@@ -1,1 +1,26 @@
+
 project_id = "mgrcrlhwyxhttgfhuvbv"
+
+[functions.enhance-agent-prompt]
+verify_jwt = false
+
+[functions.generate-tool-config]
+verify_jwt = false
+
+[functions.llm-openai]
+verify_jwt = false
+
+[functions.llm-anthropic]
+verify_jwt = false
+
+[functions.llm-gemini]
+verify_jwt = false
+
+[functions.llm-mistral]
+verify_jwt = false
+
+[functions.llm-groq]
+verify_jwt = false
+
+[functions.scrape-website]
+verify_jwt = false
