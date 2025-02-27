@@ -143,7 +143,7 @@ export function BaseNode({ id, data, selected }: BaseNodeProps) {
           </div>
           
           <div className="p-3 bg-blue-50 border-b border-blue-100 text-sm text-gray-600">
-            Type "{{" in downstream nodes to leverage output fields.
+            Type "&#123;&#123;" in downstream nodes to leverage output fields.
           </div>
           
           <div className="p-3 max-h-64 overflow-y-auto">
