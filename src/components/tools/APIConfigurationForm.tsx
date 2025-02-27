@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,18 +8,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Plus, ArrowLeft, X } from "lucide-react";
 
-interface Field {
-  key: string;
-  value: string;
-  description?: string;
-}
-
 interface ApiConfig {
   method: string;
   url: string;
   headers: Record<string, string>;
   queryParams: Record<string, string>;
   body: string;
+  isFormData?: boolean;
 }
 
 interface APIConfigurationFormProps {
@@ -35,6 +31,11 @@ interface APIConfigurationFormProps {
   onBack: () => void;
 }
 
+type FormField = {
+  key: string;
+  value: string;
+};
+
 export function APIConfigurationForm({ tool, onCreate, onBack }: APIConfigurationFormProps) {
   const [config, setConfig] = useState<ApiConfig>({
     method: tool?.apiConfig?.method || 'GET',
@@ -42,6 +43,7 @@ export function APIConfigurationForm({ tool, onCreate, onBack }: APIConfiguratio
     headers: tool?.apiConfig?.headers || {},
     queryParams: tool?.apiConfig?.queryParams || {},
     body: tool?.apiConfig?.body || '',
+    isFormData: tool?.apiConfig?.isFormData || false,
   });
 
   const [formData, setFormData] = useState({
@@ -53,256 +55,273 @@ export function APIConfigurationForm({ tool, onCreate, onBack }: APIConfiguratio
     tags: tool?.tags || [],
   });
 
+  const [headerFields, setHeaderFields] = useState<FormField[]>(
+    Object.entries(config.headers).map(([key, value]) => ({ key, value }))
+  );
+
+  const [queryFields, setQueryFields] = useState<FormField[]>(
+    Object.entries(config.queryParams).map(([key, value]) => ({ key, value }))
+  );
+
+  const [bodyFields, setBodyFields] = useState<FormField[]>(
+    Object.entries(typeof config.body === 'string' ? {} : config.body).map(([key, value]) => ({ key, value: String(value) }))
+  );
+
+  const updateHeaders = (fields: FormField[]) => {
+    const headers: Record<string, string> = {};
+    fields.forEach(field => {
+      if (field.key) headers[field.key] = field.value;
+    });
+    setConfig(prev => ({ ...prev, headers }));
+  };
+
+  const updateQueryParams = (fields: FormField[]) => {
+    const queryParams: Record<string, string> = {};
+    fields.forEach(field => {
+      if (field.key) queryParams[field.key] = field.value;
+    });
+    setConfig(prev => ({ ...prev, queryParams }));
+  };
+
+  const updateBody = (fields: FormField[]) => {
+    if (config.isFormData) {
+      const bodyObj: Record<string, string> = {};
+      fields.forEach(field => {
+        if (field.key) bodyObj[field.key] = field.value;
+      });
+      setConfig(prev => ({ ...prev, body: JSON.stringify(bodyObj) }));
+    } else {
+      setConfig(prev => ({ ...prev, body: fields[0]?.value || '' }));
+    }
+  };
+
   const handleSubmit = () => {
     onCreate(config);
   };
 
   return (
-    <div className="space-y-6 pt-4">
+    <div className="space-y-6">
+      <Button variant="ghost" onClick={onBack} className="mb-4">
+        <ArrowLeft className="mr-2 h-4 w-4" />
+        Back
+      </Button>
+
       <div className="space-y-4">
-        <div className="space-y-2">
-          <Label>Title (for humans) <span className="text-red-500">*</span></Label>
-          <Input
-            value={formData.title}
-            onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-            placeholder="OpenRouter AI API"
-          />
-        </div>
-        
-        <div className="space-y-2">
-          <Label>Name (for AI) <span className="text-red-500">*</span></Label>
-          <Input
-            value={formData.name}
-            onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-            placeholder="openrouter_ai"
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label>Description (for AI) <span className="text-red-500">*</span></Label>
-          <Textarea
-            value={formData.description}
-            onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-            placeholder="Provides access to OpenRouter AI services for various AI tasks."
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label>Icon URL</Label>
-          <Input
-            value={formData.iconUrl}
-            onChange={(e) => setFormData(prev => ({ ...prev, iconUrl: e.target.value }))}
-            placeholder="https://example.com/icon.png"
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label>Instructions</Label>
-          <Textarea
-            value={formData.instruction}
-            onChange={(e) => setFormData(prev => ({ ...prev, instruction: e.target.value }))}
-            placeholder="How to use this tool"
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label>API endpoint (URL) to call <span className="text-red-500">*</span></Label>
-          <Input
-            value={config.url}
-            onChange={(e) => setConfig(prev => ({ ...prev, url: e.target.value }))}
-            placeholder="https://api.example.com"
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label>Method <span className="text-red-500">*</span></Label>
-          <Select
-            value={config.method}
-            onValueChange={(value: string) => 
-              setConfig(prev => ({ ...prev, method: value }))
-            }
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select method" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="GET">GET</SelectItem>
-              <SelectItem value="POST">POST</SelectItem>
-              <SelectItem value="PUT">PUT</SelectItem>
-              <SelectItem value="DELETE">DELETE</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="space-y-4">
-          <div className="flex justify-between items-center">
-            <Label>Headers ({Object.keys(config.headers).length})</Label>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setConfig(prev => ({
-                ...prev,
-                headers: { ...prev.headers, '': '' }
-              }))}
+        {/* Method and URL */}
+        <div className="grid grid-cols-4 gap-4">
+          <div>
+            <Label>Method</Label>
+            <Select
+              value={config.method}
+              onValueChange={(value) => setConfig(prev => ({ ...prev, method: value }))}
             >
-              <Plus className="h-4 w-4" />
-              Add field
-            </Button>
+              <SelectTrigger>
+                <SelectValue placeholder="Select method" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="GET">GET</SelectItem>
+                <SelectItem value="POST">POST</SelectItem>
+                <SelectItem value="PUT">PUT</SelectItem>
+                <SelectItem value="DELETE">DELETE</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
-          {Object.entries(config.headers).map(([key, value], index) => (
-            <div key={index} className="flex gap-2">
-              <Input
-                placeholder="Key"
-                value={key}
-                onChange={(e) => {
-                  const newHeaders = { ...config.headers };
-                  delete newHeaders[key];
-                  newHeaders[e.target.value] = value;
-                  setConfig(prev => ({ ...prev, headers: newHeaders }));
-                }}
-              />
-              <Input
-                placeholder="Value"
-                value={value}
-                onChange={(e) => {
-                  const newHeaders = { ...config.headers };
-                  newHeaders[key] = e.target.value;
-                  setConfig(prev => ({ ...prev, headers: newHeaders }));
-                }}
-              />
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => {
-                  const newHeaders = { ...config.headers };
-                  delete newHeaders[key];
-                  setConfig(prev => ({ ...prev, headers: newHeaders }));
-                }}
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-          ))}
-        </div>
-
-        <div className="space-y-4">
-          <div className="flex justify-between items-center">
-            <Label>Query Parameters ({Object.keys(config.queryParams).length})</Label>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setConfig(prev => ({
-                ...prev,
-                queryParams: { ...prev.queryParams, '': '' }
-              }))}
-            >
-              <Plus className="h-4 w-4" />
-              Add field
-            </Button>
-          </div>
-          {Object.entries(config.queryParams).map(([key, value], index) => (
-            <div key={index} className="flex gap-2">
-              <Input
-                placeholder="Key"
-                value={key}
-                onChange={(e) => {
-                  const newParams = { ...config.queryParams };
-                  delete newParams[key];
-                  newParams[e.target.value] = value;
-                  setConfig(prev => ({ ...prev, queryParams: newParams }));
-                }}
-              />
-              <Input
-                placeholder="Value"
-                value={value}
-                onChange={(e) => {
-                  const newParams = { ...config.queryParams };
-                  newParams[key] = e.target.value;
-                  setConfig(prev => ({ ...prev, queryParams: newParams }));
-                }}
-              />
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => {
-                  const newParams = { ...config.queryParams };
-                  delete newParams[key];
-                  setConfig(prev => ({ ...prev, queryParams: newParams }));
-                }}
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-          ))}
-        </div>
-
-        <div className="space-y-4">
-          <div className="flex items-center space-x-2">
-            <Switch
-              id="form-data"
-              checked={config.isFormData}
-              onCheckedChange={(checked) => setConfig(prev => ({ ...prev, isFormData: checked }))}
+          <div className="col-span-3">
+            <Label>URL</Label>
+            <Input
+              value={config.url}
+              onChange={(e) => setConfig(prev => ({ ...prev, url: e.target.value }))}
+              placeholder="https://api.example.com/endpoint"
             />
-            <Label htmlFor="form-data">The API call body is in form data</Label>
           </div>
+        </div>
 
+        {/* Headers */}
+        <div className="space-y-2">
           <div className="flex justify-between items-center">
-            <Label>Body ({Object.keys(config.body).length})</Label>
+            <Label>Headers</Label>
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setConfig(prev => ({
-                ...prev,
-                body: { ...prev.body, '': '' }
-              }))}
+              onClick={() => {
+                const newFields = [...headerFields, { key: '', value: '' }];
+                setHeaderFields(newFields);
+                updateHeaders(newFields);
+              }}
             >
-              <Plus className="h-4 w-4" />
-              Add field
+              <Plus className="h-4 w-4 mr-2" />
+              Add Header
             </Button>
           </div>
-          {Object.entries(config.body).map(([key, value], index) => (
+          {headerFields.map((field, index) => (
             <div key={index} className="flex gap-2">
               <Input
                 placeholder="Key"
-                value={key}
+                value={field.key}
                 onChange={(e) => {
-                  const newBody = { ...config.body };
-                  delete newBody[key];
-                  newBody[e.target.value] = value;
-                  setConfig(prev => ({ ...prev, body: newBody }));
+                  const newFields = [...headerFields];
+                  newFields[index] = { ...field, key: e.target.value };
+                  setHeaderFields(newFields);
+                  updateHeaders(newFields);
                 }}
               />
               <Input
                 placeholder="Value"
-                value={value}
+                value={field.value}
                 onChange={(e) => {
-                  const newBody = { ...config.body };
-                  newBody[key] = e.target.value;
-                  setConfig(prev => ({ ...prev, body: newBody }));
+                  const newFields = [...headerFields];
+                  newFields[index] = { ...field, value: e.target.value };
+                  setHeaderFields(newFields);
+                  updateHeaders(newFields);
                 }}
               />
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={() => {
-                  const newBody = { ...config.body };
-                  delete newBody[key];
-                  setConfig(prev => ({ ...prev, body: newBody }));
+                  const newFields = headerFields.filter((_, i) => i !== index);
+                  setHeaderFields(newFields);
+                  updateHeaders(newFields);
                 }}
               >
                 <X className="h-4 w-4" />
               </Button>
             </div>
           ))}
+        </div>
+
+        {/* Query Parameters */}
+        <div className="space-y-2">
+          <div className="flex justify-between items-center">
+            <Label>Query Parameters</Label>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                const newFields = [...queryFields, { key: '', value: '' }];
+                setQueryFields(newFields);
+                updateQueryParams(newFields);
+              }}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Add Parameter
+            </Button>
+          </div>
+          {queryFields.map((field, index) => (
+            <div key={index} className="flex gap-2">
+              <Input
+                placeholder="Key"
+                value={field.key}
+                onChange={(e) => {
+                  const newFields = [...queryFields];
+                  newFields[index] = { ...field, key: e.target.value };
+                  setQueryFields(newFields);
+                  updateQueryParams(newFields);
+                }}
+              />
+              <Input
+                placeholder="Value"
+                value={field.value}
+                onChange={(e) => {
+                  const newFields = [...queryFields];
+                  newFields[index] = { ...field, value: e.target.value };
+                  setQueryFields(newFields);
+                  updateQueryParams(newFields);
+                }}
+              />
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => {
+                  const newFields = queryFields.filter((_, i) => i !== index);
+                  setQueryFields(newFields);
+                  updateQueryParams(newFields);
+                }}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          ))}
+        </div>
+
+        {/* Body */}
+        <div className="space-y-2">
+          <div className="flex justify-between items-center">
+            <Label>Body</Label>
+            <div className="flex items-center gap-2">
+              <Label htmlFor="form-data">Form Data</Label>
+              <Switch
+                id="form-data"
+                checked={config.isFormData}
+                onCheckedChange={(checked) => {
+                  setConfig(prev => ({ ...prev, isFormData: checked }));
+                  setBodyFields(checked ? [{ key: '', value: '' }] : [{ key: '', value: config.body }]);
+                }}
+              />
+            </div>
+          </div>
+          {config.isFormData ? (
+            <div className="space-y-2">
+              {bodyFields.map((field, index) => (
+                <div key={index} className="flex gap-2">
+                  <Input
+                    placeholder="Key"
+                    value={field.key}
+                    onChange={(e) => {
+                      const newFields = [...bodyFields];
+                      newFields[index] = { ...field, key: e.target.value };
+                      setBodyFields(newFields);
+                      updateBody(newFields);
+                    }}
+                  />
+                  <Input
+                    placeholder="Value"
+                    value={field.value}
+                    onChange={(e) => {
+                      const newFields = [...bodyFields];
+                      newFields[index] = { ...field, value: e.target.value };
+                      setBodyFields(newFields);
+                      updateBody(newFields);
+                    }}
+                  />
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => {
+                      const newFields = bodyFields.filter((_, i) => i !== index);
+                      setBodyFields(newFields);
+                      updateBody(newFields);
+                    }}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  const newFields = [...bodyFields, { key: '', value: '' }];
+                  setBodyFields(newFields);
+                  updateBody(newFields);
+                }}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add Field
+              </Button>
+            </div>
+          ) : (
+            <Textarea
+              value={config.body}
+              onChange={(e) => setConfig(prev => ({ ...prev, body: e.target.value }))}
+              placeholder="Raw JSON body"
+            />
+          )}
         </div>
       </div>
 
-      <div className="flex justify-between pt-4">
-        <Button variant="outline" onClick={onBack}>
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back
-        </Button>
-        <Button onClick={handleSubmit}>Create</Button>
+      <div className="flex justify-end pt-4">
+        <Button onClick={handleSubmit}>Create Tool</Button>
       </div>
     </div>
   );

@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -25,6 +24,7 @@ interface ApiConfig {
   headers: Record<string, string>;
   queryParams: Record<string, string>;
   body: string;
+  isFormData?: boolean;
 }
 
 interface CustomTool {
@@ -100,7 +100,8 @@ export function CreateCustomToolSheet() {
           headers: apiConfig.headers || {},
           queryParams: apiConfig.queryParams || {},
           body: apiConfig.body || '',
-        } as Record<string, unknown>, // Cast to a generic JSON object type
+          isFormData: apiConfig.isFormData || false,
+        },
       };
 
       const { error } = await supabase.from('tools').insert(toolData);
@@ -168,7 +169,11 @@ export function CreateCustomToolSheet() {
     }
 
     if (step === 'configuration' && tool) {
-      return <APIConfigurationForm tool={tool} onCreate={handleCreate} />;
+      return <APIConfigurationForm 
+        tool={tool} 
+        onCreate={handleCreate} 
+        onBack={() => setStep('initial')} 
+      />;
     }
 
     return null;
