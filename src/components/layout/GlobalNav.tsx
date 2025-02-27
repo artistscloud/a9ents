@@ -42,11 +42,17 @@ export function GlobalNav() {
             <Link to="/" className="text-xl font-bold">
               Home
             </Link>
-            <Link to="/dashboard" className="text-muted-foreground hover:text-foreground">
-              Dashboard
+            <Link to="/tools" className="text-muted-foreground hover:text-foreground">
+              Tools
             </Link>
-            <Link to="/admin" className="text-muted-foreground hover:text-foreground">
-              Admin Panel
+            <Link to="/agents" className="text-muted-foreground hover:text-foreground">
+              Agents
+            </Link>
+            <Link to="/workflows" className="text-muted-foreground hover:text-foreground">
+              Workflows
+            </Link>
+            <Link to="/knowledgebase" className="text-muted-foreground hover:text-foreground">
+              Knowledge Base
             </Link>
           </div>
 
@@ -60,11 +66,17 @@ export function GlobalNav() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48">
-                  <DropdownMenuItem onSelect={() => navigate('/dashboard')}>
-                    Dashboard
+                  <DropdownMenuItem onSelect={() => navigate('/tools')}>
+                    Tools
                   </DropdownMenuItem>
-                  <DropdownMenuItem onSelect={() => navigate('/admin')}>
-                    Admin Panel
+                  <DropdownMenuItem onSelect={() => navigate('/agents')}>
+                    Agents
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => navigate('/workflows')}>
+                    Workflows
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => navigate('/knowledgebase')}>
+                    Knowledge Base
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onSelect={handleSignOut}>
