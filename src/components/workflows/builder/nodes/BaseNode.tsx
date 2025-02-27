@@ -1,5 +1,5 @@
 
-import { Handle, Position } from '@xyflow/react';
+import { Handle, Position, useReactFlow } from '@xyflow/react';
 import { 
   ArrowDownToLine, 
   ArrowUpFromLine, 
@@ -9,7 +9,8 @@ import {
   FileText, 
   Globe, 
   GitFork, 
-  Timer 
+  Timer,
+  X
 } from "lucide-react";
 
 const nodeIcons: Record<string, any> = {
@@ -36,11 +37,24 @@ interface BaseNodeProps {
   selected?: boolean;
 }
 
-export function BaseNode({ data, type }: BaseNodeProps) {
+export function BaseNode({ id, data, type }: BaseNodeProps) {
   const Icon = nodeIcons[type] || FileText;
+  const { setNodes, getNodes } = useReactFlow();
+
+  const handleDelete = () => {
+    setNodes(getNodes().filter(node => node.id !== id));
+  };
 
   return (
-    <div className={`px-4 py-2 shadow-md rounded-md bg-white border ${type === 'input' ? 'border-blue-500' : type === 'output' ? 'border-green-500' : 'border-gray-200'}`}>
+    <div className={`relative px-4 py-2 shadow-md rounded-md bg-white border ${type === 'input' ? 'border-blue-500' : type === 'output' ? 'border-green-500' : 'border-gray-200'}`}>
+      <button
+        onClick={handleDelete}
+        className="absolute top-1 right-1 p-1 rounded-sm hover:bg-gray-100"
+        aria-label="Delete node"
+      >
+        <X className="h-3 w-3 text-gray-500" />
+      </button>
+      
       <div className="flex items-center gap-2">
         <Icon className="h-4 w-4" />
         <div className="text-sm font-medium">{data.label}</div>
