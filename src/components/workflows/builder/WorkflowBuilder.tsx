@@ -17,20 +17,47 @@ import { supabase } from '@/integrations/supabase/client';
 import { NodePalette } from './NodePalette';
 import { WorkflowNavigation } from './WorkflowNavigation';
 import { BaseNode } from './nodes/BaseNode';
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import '@xyflow/react/dist/style.css';
 
+// Define a single node type that will be used for all nodes
 const nodeTypes = {
   input: BaseNode,
   output: BaseNode,
+  text: BaseNode,
+  pipeline: BaseNode,
+  transform: BaseNode,
+  'file-save': BaseNode,
+  note: BaseNode,
   'llm-openai': BaseNode,
   'llm-anthropic': BaseNode,
   'llm-perplexity': BaseNode,
-  'logic-if': BaseNode,
-  'logic-switch': BaseNode,
-  'trigger-webhook': BaseNode,
-  'trigger-schedule': BaseNode,
+  'kb-reader': BaseNode,
+  'kb-writer': BaseNode,
+  'kb-search': BaseNode,
+  audio: BaseNode,
+  image: BaseNode,
+  'logic-condition': BaseNode,
+  'logic-merge': BaseNode,
+  'logic-time': BaseNode,
+  'logic-ttsql': BaseNode,
+  'text-ops': BaseNode,
+  'json-ops': BaseNode,
+  'list-ops': BaseNode,
+  'file-ops': BaseNode,
+  'ai-ops': BaseNode,
+  notifications: BaseNode,
+  'data-enrichment': BaseNode,
+  'chat-memory': BaseNode,
+  'data-collector': BaseNode,
+  'chat-file-reader': BaseNode,
   'data-csv': BaseNode,
   'data-db': BaseNode,
+  'data-audio': BaseNode,
+  'integration-grid': BaseNode,
+  'trigger-webhook': BaseNode,
+  'trigger-schedule': BaseNode,
 };
 
 export function WorkflowBuilder() {
@@ -38,6 +65,7 @@ export function WorkflowBuilder() {
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [activeCategory, setActiveCategory] = useState('general');
+  const [selectedNode, setSelectedNode] = useState<Node | null>(null);
 
   const { data: workflow, isLoading } = useQuery({
     queryKey: ['workflow', id],
@@ -67,19 +95,21 @@ export function WorkflowBuilder() {
     (event: React.DragEvent) => {
       event.preventDefault();
 
+      const reactFlowBounds = event.currentTarget.getBoundingClientRect();
       const type = event.dataTransfer.getData('application/reactflow');
+
       if (!type) return;
 
       const position = {
-        x: event.clientX - event.currentTarget.getBoundingClientRect().left,
-        y: event.clientY - event.currentTarget.getBoundingClientRect().top,
+        x: event.clientX - reactFlowBounds.left,
+        y: event.clientY - reactFlowBounds.top,
       };
 
       const newNode: Node = {
         id: crypto.randomUUID(),
         type,
         position,
-        data: { label: type.split('-')[1] || type },
+        data: { label: type.split('-').pop() || type },
       };
 
       setNodes((nds) => nds.concat(newNode));
@@ -90,6 +120,10 @@ export function WorkflowBuilder() {
   const onDragOver = useCallback((event: React.DragEvent) => {
     event.preventDefault();
     event.dataTransfer.dropEffect = 'move';
+  }, []);
+
+  const onNodeClick = useCallback((event: React.MouseEvent, node: Node) => {
+    setSelectedNode(node);
   }, []);
 
   if (isLoading) {
@@ -120,6 +154,7 @@ export function WorkflowBuilder() {
             onConnect={onConnect}
             onDrop={onDrop}
             onDragOver={onDragOver}
+            onNodeClick={onNodeClick}
             nodeTypes={nodeTypes}
             fitView
           >
@@ -127,6 +162,35 @@ export function WorkflowBuilder() {
             <Controls />
           </ReactFlow>
         </div>
+        {selectedNode && selectedNode.type === 'input' && (
+          <div className="w-80 border-l p-4 bg-background">
+            <h3 className="text-lg font-semibold mb-4">Input Configuration</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Input Type</label>
+                <select className="w-full p-2 border rounded">
+                  <option value="text">Text</option>
+                  <option value="file">File</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Label</label>
+                <Input type="text" placeholder="Enter label" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Description</label>
+                <Textarea placeholder="Enter description" />
+              </div>
+              {/* File-specific options */}
+              <div className="flex items-center gap-2">
+                <input type="checkbox" id="processFiles" />
+                <label htmlFor="processFiles" className="text-sm">
+                  Process Files into Text
+                </label>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
