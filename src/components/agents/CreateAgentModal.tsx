@@ -10,6 +10,7 @@ import { AgentToolsSelection } from "./AgentToolsSelection";
 import { AgentActionButtons } from "./AgentActionButtons";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useQuery } from "@tanstack/react-query";
+import { useLLM } from "@/hooks/use-llm";
 
 interface CreateAgentModalProps {
   open: boolean;
@@ -21,7 +22,7 @@ export function CreateAgentModal({ open, onOpenChange }: CreateAgentModalProps) 
   const [enhancing, setEnhancing] = useState(false);
   const [jobDescription, setJobDescription] = useState("");
   const [exampleOutput, setExampleOutput] = useState("");
-  const [selectedProvider, setSelectedProvider] = useState("openai");
+  const [selectedProvider, setSelectedProvider] = useState("");
   const [selectedModel, setSelectedModel] = useState("");
   const [temperature, setTemperature] = useState([0.7]);
   const [maxTokens, setMaxTokens] = useState([2000]);
@@ -29,6 +30,7 @@ export function CreateAgentModal({ open, onOpenChange }: CreateAgentModalProps) 
   const [selectedTools, setSelectedTools] = useState<string[]>([]);
   const [selectedWorkflow, setSelectedWorkflow] = useState("");
   const { toast } = useToast();
+  const { generate } = useLLM({ preferredProvider: selectedProvider as any });
 
   // Fetch available workflows
   const { data: workflows } = useQuery({
@@ -36,6 +38,30 @@ export function CreateAgentModal({ open, onOpenChange }: CreateAgentModalProps) 
     queryFn: async () => {
       const { data, error } = await supabase
         .from('workflows')
+        .select('*');
+      if (error) throw error;
+      return data;
+    }
+  });
+
+  // Fetch available knowledgebases
+  const { data: knowledgebases } = useQuery({
+    queryKey: ['knowledgebases'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('knowledgebase')
+        .select('*');
+      if (error) throw error;
+      return data;
+    }
+  });
+
+  // Fetch available tools
+  const { data: tools } = useQuery({
+    queryKey: ['tools'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('tools')
         .select('*');
       if (error) throw error;
       return data;
@@ -59,7 +85,10 @@ export function CreateAgentModal({ open, onOpenChange }: CreateAgentModalProps) 
           action: 'enhance',
           provider: selectedProvider,
           text: jobDescription,
-          enhanceOutput: true // New flag to also generate example output
+          enhanceOutput: true,
+          tools: tools,
+          knowledgebases: knowledgebases,
+          workflows: workflows
         },
       });
 
@@ -70,9 +99,20 @@ export function CreateAgentModal({ open, onOpenChange }: CreateAgentModalProps) 
         setExampleOutput(data.exampleOutput);
       }
       
+      // Auto-select suggested tools and workflows if provided
+      if (data.suggestedTools) {
+        setSelectedTools(data.suggestedTools);
+      }
+      if (data.suggestedWorkflow) {
+        setSelectedWorkflow(data.suggestedWorkflow);
+      }
+      if (data.suggestedKnowledgebase) {
+        setSelectedKnowledgebase(data.suggestedKnowledgebase);
+      }
+      
       toast({
         title: "Enhanced successfully",
-        description: "Your description and example output have been enhanced.",
+        description: "Your description and configurations have been enhanced.",
       });
     } catch (error) {
       console.error('Error enhancing text:', error);
@@ -98,23 +138,47 @@ export function CreateAgentModal({ open, onOpenChange }: CreateAgentModalProps) 
 
     setLoading(true);
     try {
-      const { data, error } = await supabase
+      // First, let's create the workflow if none is selected
+      let workflowId = selectedWorkflow;
+      if (!workflowId) {
+        const { data: newWorkflow, error: workflowError } = await supabase
+          .from('workflows')
+          .insert([{
+            name: `${jobDescription.split('\n')[0]} Workflow`,
+            steps: [],
+          }])
+          .select()
+          .single();
+
+        if (workflowError) throw workflowError;
+        workflowId = newWorkflow.id;
+      }
+
+      // Create the agent with all configurations
+      const { data: agent, error: agentError } = await supabase
         .from('agents')
         .insert([{
           name: jobDescription.split('\n')[0] || 'New Agent',
           description: jobDescription,
           tools: selectedTools,
           knowledgebase_id: selectedKnowledgebase || null,
-          workflow_id: selectedWorkflow || null
+          workflow_id: workflowId,
+          selected_tools: selectedTools,
+          tools: {
+            provider: selectedProvider,
+            model: selectedModel,
+            temperature: temperature[0],
+            maxTokens: maxTokens[0]
+          }
         }])
         .select()
         .single();
 
-      if (error) throw error;
+      if (agentError) throw agentError;
 
       toast({
         title: "Success",
-        description: "Agent created successfully.",
+        description: "Agent created successfully with workflow and configurations.",
       });
       
       onOpenChange(false);
