@@ -40,34 +40,44 @@ export function GlobalNav() {
   const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        // Check if user is admin
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', session.user.id)
-          .single();
-        
-        setIsAdmin(profile?.role === 'admin');
-      }
-      setLoading(false);
-    });
+    const checkSession = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        setUser(session?.user ?? null);
 
-    // Listen for authentication state changes
+        if (session?.user) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', session.user.id)
+            .single();
+          
+          setIsAdmin(profile?.role === 'admin');
+        }
+        setLoading(false);
+      } catch (error) {
+        console.error('Session check error:', error);
+        setLoading(false);
+      }
+    };
+
+    checkSession();
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setUser(session?.user ?? null);
+      
       if (session?.user) {
-        // Check if user is admin
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', session.user.id)
-          .single();
-        
-        setIsAdmin(profile?.role === 'admin');
+        try {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', session.user.id)
+            .single();
+          
+          setIsAdmin(profile?.role === 'admin');
+        } catch (error) {
+          console.error('Profile check error:', error);
+        }
       } else {
         setIsAdmin(false);
       }
