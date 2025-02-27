@@ -1,25 +1,18 @@
 
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 import { Handle, Position } from '@xyflow/react';
-import { Settings, X, RefreshCw, ChevronRight } from 'lucide-react';
+import { X, RefreshCw, Settings } from 'lucide-react';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
 
 interface BaseNodeProps {
   id: string;
   data: {
     label: string;
     type: string;
-    systemPrompt?: string;
-    prompt?: string;
-    model?: string;
-    usePersonalKey?: boolean;
-    fileName?: string;
-    files?: { name: string; type: string }[];
+    inputType?: string;
     outputFields?: {
       name: string;
       type: string;
@@ -34,190 +27,142 @@ export function BaseNode({ id, data, selected }: BaseNodeProps) {
 
   const getIconForType = () => {
     switch (data.type) {
-      case 'llm-openai':
-        return '🤖';
-      case 'llm-anthropic':
-        return 'AI';
-      case 'file-save':
-        return '💾';
-      case 'llm-together':
-        return '🔗';
-      default:
-        return '📄';
-    }
-  };
-
-  const renderFields = () => {
-    switch (data.type) {
-      case 'llm-openai':
-      case 'llm-anthropic':
-      case 'llm-together':
+      case 'input':
         return (
-          <>
-            <div className="space-y-2">
-              <Label className="flex items-center gap-2">
-                System (Instructions)
-                <span className="text-xs text-blue-500 bg-blue-100 px-1 rounded">Text</span>
-              </Label>
-              <Textarea 
-                placeholder="Answer the Question based on Context in a professional manner."
-                value={data.systemPrompt}
-                className="resize-none min-h-[60px]"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label className="flex items-center gap-2">
-                Prompt
-                <span className="text-xs text-blue-500 bg-blue-100 px-1 rounded">Text</span>
-              </Label>
-              <Textarea 
-                placeholder="Type '{{' to utilize variables. E.g., Question: {{input_0.text}}"
-                value={data.prompt}
-                className="resize-none min-h-[60px]"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Model</Label>
-              <Select value={data.model}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select model" />
-                </SelectTrigger>
-                <SelectContent>
-                  {data.type === 'llm-openai' && (
-                    <SelectItem value="gpt-4">GPT-4</SelectItem>
-                  )}
-                  {data.type === 'llm-anthropic' && (
-                    <SelectItem value="claude-3">Claude 3</SelectItem>
-                  )}
-                  {data.type === 'llm-together' && (
-                    <SelectItem value="deepseek-ai/DeepSeek-R1">DeepSeek-R1</SelectItem>
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Switch id="api-key" checked={data.usePersonalKey} />
-              <Label htmlFor="api-key">Use Personal API Key</Label>
-            </div>
-          </>
+          <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" 
+              strokeWidth="2" 
+              strokeLinecap="round" 
+              strokeLinejoin="round"
+            />
+          </svg>
         );
-
-      case 'file-save':
-        return (
-          <>
-            <div className="space-y-2">
-              <Label className="flex items-center gap-2">
-                File Name <span className="text-red-500">*</span>
-                <span className="text-xs text-blue-500 bg-blue-100 px-1 rounded">Text</span>
-              </Label>
-              <Input 
-                placeholder="Type '{{' to utilize variables"
-                value={data.fileName}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label className="flex items-center gap-2">
-                Files <span className="text-red-500">*</span>
-              </Label>
-              <div className="flex items-center gap-2">
-                <Switch />
-                <span className="text-xs bg-blue-100 px-1 rounded">List Files</span>
-              </div>
-              <div className="border rounded-md p-2">
-                <Label>Item 1*</Label>
-                <div className="flex gap-2 mt-1">
-                  <Input placeholder="Select file" />
-                  <Button variant="outline" size="icon">
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-                <Button variant="ghost" className="w-full mt-2 text-sm">
-                  + Add Item
-                </Button>
-              </div>
-            </div>
-          </>
-        );
-
       default:
         return null;
     }
   };
 
-  const renderOutputPanel = () => {
-    if (!showOutputs) return null;
-
-    return (
-      <div className="absolute left-full top-0 ml-2 w-80 bg-white rounded-lg border shadow-lg p-4">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="font-medium">Outputs</h3>
-          <Button variant="ghost" size="icon" onClick={() => setShowOutputs(false)}>
-            <X className="h-4 w-4" />
-          </Button>
-        </div>
-        <p className="text-sm text-muted-foreground mb-4">
-          Type "{{" in downstream nodes to leverage output fields.
-        </p>
-        <div className="space-y-4">
-          {data.outputFields?.map((field, index) => (
-            <div key={index} className="space-y-1">
-              <div className="flex items-center justify-between">
-                <span className="font-medium">{field.name}</span>
-                <span className="text-xs text-blue-500 bg-blue-100 px-1 rounded">
-                  {field.type}
-                </span>
-              </div>
-              <p className="text-sm text-muted-foreground">{field.description}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
+  const togglePanel = () => {
+    setShowOutputs(!showOutputs);
   };
 
   return (
-    <div className="relative group">
-      <div className={`bg-white rounded-lg border shadow-sm p-4 min-w-[400px] ${selected ? 'border-blue-500' : ''}`}>
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <span className="text-xl">{getIconForType()}</span>
-            <span className="font-medium">{data.label || id}</span>
+    <div className="relative">
+      <div className="border border-blue-300 rounded-lg w-80 bg-white shadow-sm overflow-hidden">
+        {/* Header */}
+        <div className="bg-blue-50 p-3 flex justify-between items-center">
+          <div className="flex items-center">
+            {getIconForType()}
+            <span className="text-blue-700 font-medium">{data.label}</span>
           </div>
-          <div className="flex items-center gap-1">
-            <Button variant="ghost" size="icon">
-              <RefreshCw className="h-4 w-4" />
-            </Button>
-            <Button variant="ghost" size="icon">
-              <Settings className="h-4 w-4" />
-            </Button>
-            <Button variant="ghost" size="icon">
-              <X className="h-4 w-4" />
-            </Button>
+          <div className="flex items-center">
+            <button 
+              className="text-blue-600 hover:text-blue-800 mr-2"
+              onClick={togglePanel}
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </button>
+            <button className="text-gray-500 hover:text-gray-700">
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+        </div>
+        
+        {/* Description */}
+        <div className="p-3 bg-blue-50 border-b border-blue-100 text-sm text-gray-600">
+          Pass data of different types into your workflow
+        </div>
+        
+        {/* Input Name - Editable */}
+        <div className="bg-blue-100 p-3 text-center text-sm text-blue-700">
+          <input 
+            type="text"
+            defaultValue={id}
+            className="bg-transparent border-none text-center w-full focus:outline-none focus:ring-1 focus:ring-blue-400 rounded"
+          />
+        </div>
+        
+        {/* Node Configuration */}
+        <div className="p-3">
+          <div className="mb-4">
+            <div className="flex justify-between items-center mb-1">
+              <Label className="text-gray-700 font-medium">Type</Label>
+              <span className="bg-blue-600 text-white text-xs px-2 py-1 rounded-md">Dropdown</span>
+            </div>
+            <div className="relative">
+              <Select value={data.inputType} onValueChange={(value) => console.log(value)}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="text">Text</SelectItem>
+                  <SelectItem value="files">Files</SelectItem>
+                  <SelectItem value="list-files">Lists of Files</SelectItem>
+                  <SelectItem value="audio">Audio</SelectItem>
+                  <SelectItem value="image">Image</SelectItem>
+                  <SelectItem value="knowledgebase">Knowledgebase</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </div>
 
-        <div className="text-sm bg-slate-50 p-2 rounded mb-4">
-          {id}
-        </div>
-
-        <div className="space-y-4">
-          {renderFields()}
-        </div>
-
-        <Handle type="target" position={Position.Left} className="w-2 h-4 !bg-slate-400" />
-        <Handle type="source" position={Position.Right} className="w-2 h-4 !bg-slate-400" />
+        {/* Connection point */}
+        <Handle 
+          type="source" 
+          position={Position.Right} 
+          className="!absolute !right-0 !top-1/2 !translate-y-1/2 !w-4 !h-4 !rounded-full !bg-blue-500 !border-2 !border
+-white" 
+        />
       </div>
-
-      <Button
-        variant="ghost"
-        size="icon"
-        className="absolute -right-10 top-1/2 -translate-y-1/2"
-        onClick={() => setShowOutputs(!showOutputs)}
-      >
-        <ChevronRight className={`h-4 w-4 transition-transform ${showOutputs ? 'rotate-180' : ''}`} />
-      </Button>
-
-      {renderOutputPanel()}
+      
+      {/* Side Panel */}
+      {showOutputs && (
+        <div className="absolute top-0 left-full ml-4 border border-blue-300 rounded-lg w-80 bg-white shadow-sm overflow-hidden">
+          <div className="bg-blue-50 p-3 flex justify-between items-center">
+            <div className="flex items-center">
+              <span className="text-blue-700 font-medium">Outputs</span>
+            </div>
+            <button className="text-gray-500 hover:text-gray-700" onClick={togglePanel}>
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+          
+          <div className="p-3 bg-blue-50 border-b border-blue-100 text-sm text-gray-600">
+            Type "{{" in downstream nodes to leverage output fields.
+          </div>
+          
+          <div className="p-3 max-h-64 overflow-y-auto">
+            <div className="mb-2 text-gray-700 font-medium">Output Fields</div>
+            <div className="flex justify-between items-center mb-2 pb-2 border-b border-gray-100">
+              <div className="text-sm">
+                <div className="text-blue-600">text</div>
+                <div className="text-gray-500 text-xs">The inputted text</div>
+              </div>
+              <span className="bg-indigo-100 text-indigo-700 text-xs px-2 py-1 rounded">Text</span>
+            </div>
+            
+            <div className="mt-4 mb-2">
+              <div className="flex items-center text-blue-600">
+                <span className="mr-1">•</span>
+                <span className="font-medium">Advanced Outputs</span>
+                <svg className="w-4 h-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 15l7-7 7 7" />
+                </svg>
+              </div>
+            </div>
+            
+            <div className="flex justify-between items-center mb-2 pb-2 border-b border-gray-100">
+              <div className="text-sm">
+                <div className="text-blue-600">complete</div>
+              </div>
+              <span className="bg-purple-100 text-purple-700 text-xs px-2 py-1 rounded">Path</span>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
