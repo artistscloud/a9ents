@@ -6,15 +6,21 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 interface AgentToolsSelectionProps {
   selectedKnowledgebase: string;
   selectedTools: string[];
+  selectedWorkflow: string;
+  workflows: Array<{ id: string; name: string }>;
   onKnowledgebaseChange: (value: string) => void;
   onToolsChange: (tools: string[]) => void;
+  onWorkflowChange: (value: string) => void;
 }
 
 export function AgentToolsSelection({
   selectedKnowledgebase,
   selectedTools,
+  selectedWorkflow,
+  workflows,
   onKnowledgebaseChange,
   onToolsChange,
+  onWorkflowChange,
 }: AgentToolsSelectionProps) {
   const availableTools = [
     { id: "1", name: "Web Search" },
@@ -25,6 +31,22 @@ export function AgentToolsSelection({
 
   return (
     <div className="space-y-4">
+      <div className="space-y-2">
+        <Label>Workflow</Label>
+        <Select value={selectedWorkflow} onValueChange={onWorkflowChange}>
+          <SelectTrigger>
+            <SelectValue placeholder="Select workflow" />
+          </SelectTrigger>
+          <SelectContent>
+            {workflows.map((workflow) => (
+              <SelectItem key={workflow.id} value={workflow.id}>
+                {workflow.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
       <div className="space-y-2">
         <Label>Knowledgebase</Label>
         <Select value={selectedKnowledgebase} onValueChange={onKnowledgebaseChange}>

@@ -9,6 +9,7 @@ import { AgentModelSettings } from "./AgentModelSettings";
 import { AgentToolsSelection } from "./AgentToolsSelection";
 import { AgentActionButtons } from "./AgentActionButtons";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useQuery } from "@tanstack/react-query";
 
 interface CreateAgentModalProps {
   open: boolean;
@@ -26,7 +27,20 @@ export function CreateAgentModal({ open, onOpenChange }: CreateAgentModalProps) 
   const [maxTokens, setMaxTokens] = useState([2000]);
   const [selectedKnowledgebase, setSelectedKnowledgebase] = useState("");
   const [selectedTools, setSelectedTools] = useState<string[]>([]);
+  const [selectedWorkflow, setSelectedWorkflow] = useState("");
   const { toast } = useToast();
+
+  // Fetch available workflows
+  const { data: workflows } = useQuery({
+    queryKey: ['workflows'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('workflows')
+        .select('*');
+      if (error) throw error;
+      return data;
+    }
+  });
 
   const handleEnhanceWithAI = async () => {
     if (!jobDescription) {
@@ -44,16 +58,21 @@ export function CreateAgentModal({ open, onOpenChange }: CreateAgentModalProps) 
         body: { 
           action: 'enhance',
           provider: selectedProvider,
-          text: jobDescription 
+          text: jobDescription,
+          enhanceOutput: true // New flag to also generate example output
         },
       });
 
       if (error) throw error;
       
       setJobDescription(data.enhancedText);
+      if (data.exampleOutput) {
+        setExampleOutput(data.exampleOutput);
+      }
+      
       toast({
         title: "Enhanced successfully",
-        description: "Your description has been enhanced.",
+        description: "Your description and example output have been enhanced.",
       });
     } catch (error) {
       console.error('Error enhancing text:', error);
@@ -79,15 +98,31 @@ export function CreateAgentModal({ open, onOpenChange }: CreateAgentModalProps) 
 
     setLoading(true);
     try {
-      // TODO: Call AI generation endpoint
+      const { data, error } = await supabase
+        .from('agents')
+        .insert([{
+          name: jobDescription.split('\n')[0] || 'New Agent',
+          description: jobDescription,
+          tools: selectedTools,
+          knowledgebase_id: selectedKnowledgebase || null,
+          workflow_id: selectedWorkflow || null
+        }])
+        .select()
+        .single();
+
+      if (error) throw error;
+
       toast({
-        title: "Generating agent configuration...",
-        description: "Please wait while we process your request.",
+        title: "Success",
+        description: "Agent created successfully.",
       });
+      
+      onOpenChange(false);
     } catch (error) {
+      console.error('Error creating agent:', error);
       toast({
         title: "Error",
-        description: "Failed to generate agent configuration.",
+        description: "Failed to create agent.",
         variant: "destructive",
       });
     } finally {
@@ -97,13 +132,13 @@ export function CreateAgentModal({ open, onOpenChange }: CreateAgentModalProps) 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] sm:max-w-[600px] p-0">
-        <DialogHeader className="p-6 pb-0">
+      <DialogContent className="max-h-[90vh] sm:max-w-[600px]">
+        <DialogHeader className="px-6 pt-6">
           <DialogTitle>New agent</DialogTitle>
         </DialogHeader>
         
-        <ScrollArea className="h-full">
-          <div className="space-y-6 p-6">
+        <ScrollArea className="h-full px-6">
+          <div className="space-y-6 pb-6">
             <AgentDescriptionInput
               jobDescription={jobDescription}
               exampleOutput={exampleOutput}
@@ -131,6 +166,9 @@ export function CreateAgentModal({ open, onOpenChange }: CreateAgentModalProps) 
               selectedTools={selectedTools}
               onKnowledgebaseChange={setSelectedKnowledgebase}
               onToolsChange={setSelectedTools}
+              selectedWorkflow={selectedWorkflow}
+              onWorkflowChange={setSelectedWorkflow}
+              workflows={workflows || []}
             />
 
             <AgentActionButtons
