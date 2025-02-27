@@ -8,8 +8,11 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
+import { Database } from "@/integrations/supabase/types";
 
-const LLM_PROVIDERS = [
+type LLMProvider = Database["public"]["Enums"]["llm_provider"];
+
+const LLM_PROVIDERS: { id: LLMProvider; name: string; description: string; }[] = [
   { id: 'openai', name: 'OpenAI', description: 'GPT-4 and other models' },
   { id: 'anthropic', name: 'Anthropic', description: 'Claude and other models' },
   { id: 'gemini', name: 'Google Gemini', description: 'Google\'s AI models' },
@@ -23,7 +26,7 @@ const LLM_PROVIDERS = [
 export function LLMConfiguration() {
   const { toast } = useToast();
   const [newApiKey, setNewApiKey] = useState("");
-  const [selectedProvider, setSelectedProvider] = useState("");
+  const [selectedProvider, setSelectedProvider] = useState<LLMProvider | null>(null);
 
   const { data: configurations, refetch } = useQuery({
     queryKey: ['llm-configurations'],
@@ -37,7 +40,7 @@ export function LLMConfiguration() {
     }
   });
 
-  const handleSaveApiKey = async (provider: string) => {
+  const handleSaveApiKey = async (provider: LLMProvider) => {
     if (!newApiKey.trim()) {
       toast({
         title: "Error",
@@ -71,7 +74,7 @@ export function LLMConfiguration() {
       });
 
       setNewApiKey("");
-      setSelectedProvider("");
+      setSelectedProvider(null);
       refetch();
     } catch (error) {
       console.error('Error saving API key:', error);
@@ -83,7 +86,7 @@ export function LLMConfiguration() {
     }
   };
 
-  const handleToggleProvider = async (provider: string, isEnabled: boolean) => {
+  const handleToggleProvider = async (provider: LLMProvider, isEnabled: boolean) => {
     try {
       const { error } = await supabase
         .from('llm_configurations')
@@ -151,7 +154,7 @@ export function LLMConfiguration() {
                       <Button
                         variant="outline"
                         onClick={() => {
-                          setSelectedProvider("");
+                          setSelectedProvider(null);
                           setNewApiKey("");
                         }}
                       >
