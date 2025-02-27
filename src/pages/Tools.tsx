@@ -1,8 +1,9 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CreateCustomToolSheet } from "@/components/tools/CreateCustomToolSheet";
+import { Plus } from "lucide-react";
 
 const Tools = () => {
   const [tools, setTools] = useState([]);
@@ -11,10 +12,7 @@ const Tools = () => {
     <div className="animate-in">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-4xl font-bold">Tools</h1>
-        <Button>
-          <Plus className="h-4 w-4 mr-2" />
-          New Tool
-        </Button>
+        <CreateCustomToolSheet />
       </div>
       
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
