@@ -15,7 +15,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { APIConfigurationForm } from "./APIConfigurationForm";
 import { InitialToolForm } from "./InitialToolForm";
-import { ApiConfig, CustomTool, GenerateToolResponse } from "./types";
+import { ApiConfig, CustomTool, GenerateToolResponse, ToolData } from "./types";
 
 export function CreateCustomToolSheet() {
   const [step, setStep] = useState<'initial' | 'configuration'>('initial');
@@ -34,7 +34,15 @@ export function CreateCustomToolSheet() {
       if (response.error) throw new Error('Failed to generate configuration');
       
       const data = response.data as GenerateToolResponse;
-      setTool(data);
+      // Convert GenerateToolResponse to Partial<CustomTool>
+      setTool({
+        name: data.name,
+        description: data.description,
+        instruction: data.instruction,
+        iconUrl: data.iconUrl,
+        tags: data.tags,
+        apiConfig: data.apiConfig as ApiConfig,
+      });
       setStep('configuration');
     } catch (error) {
       toast({
@@ -68,13 +76,20 @@ export function CreateCustomToolSheet() {
 
   const handleCreate = async (apiConfig: ApiConfig) => {
     try {
-      const toolData = {
+      const toolData: ToolData = {
         name: tool.name || '',
         description: tool.description || '',
-        icon_url: tool.iconUrl,
+        icon_url: tool.iconUrl || '',
         instruction: tool.instruction || '',
         tags: tool.tags || [],
-        api_config: apiConfig,
+        api_config: {
+          method: apiConfig.method,
+          url: apiConfig.url,
+          headers: apiConfig.headers,
+          queryParams: apiConfig.queryParams,
+          body: apiConfig.body,
+          isFormData: apiConfig.isFormData,
+        },
       };
 
       const { error } = await supabase.from('tools').insert(toolData);

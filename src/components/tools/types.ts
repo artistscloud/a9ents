@@ -14,7 +14,7 @@ export interface CustomTool {
   instruction: string;
   iconUrl: string;
   tags: string[];
-  apiConfig: ApiConfig;
+  apiConfig?: ApiConfig; // Made optional to match GenerateToolResponse
 }
 
 export interface GenerateToolResponse {
@@ -24,4 +24,14 @@ export interface GenerateToolResponse {
   iconUrl?: string;
   tags?: string[];
   apiConfig?: Partial<ApiConfig>;
+}
+
+// Type for the database schema
+export interface ToolData {
+  name: string;
+  description: string;
+  icon_url: string;
+  instruction: string;
+  tags: string[];
+  api_config: Record<string, unknown>;
 }
