@@ -52,7 +52,14 @@ const Tools = () => {
         .order('created_at', { ascending: false });
       
       if (error) throw error;
-      return data as Tool[];
+      
+      // Transform the data to match the Tool interface
+      return (data as any[]).map(tool => ({
+        ...tool,
+        api_config: typeof tool.api_config === 'string' 
+          ? JSON.parse(tool.api_config)
+          : tool.api_config
+      })) as Tool[];
     },
   });
 

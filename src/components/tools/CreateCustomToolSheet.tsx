@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,31 +11,11 @@ import {
 } from "@/components/ui/sheet";
 import { Plus } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { APIConfigurationForm } from "./APIConfigurationForm";
-
-// Make the interface match the JSON structure expected by Supabase
-interface ApiConfig {
-  method: string;
-  url: string;
-  headers: Record<string, string>;
-  queryParams: Record<string, string>;
-  body: string;
-  isFormData?: boolean;
-}
-
-interface CustomTool {
-  name: string;
-  description: string;
-  instruction: string;
-  iconUrl: string;
-  tags: string[];
-  apiConfig: ApiConfig;
-}
+import { InitialToolForm } from "./InitialToolForm";
+import { ApiConfig, CustomTool, GenerateToolResponse } from "./types";
 
 export function CreateCustomToolSheet() {
   const [step, setStep] = useState<'initial' | 'configuration'>('initial');
@@ -52,7 +33,7 @@ export function CreateCustomToolSheet() {
       
       if (response.error) throw new Error('Failed to generate configuration');
       
-      const data = response.data;
+      const data = response.data as GenerateToolResponse;
       setTool(data);
       setStep('configuration');
     } catch (error) {
@@ -87,21 +68,13 @@ export function CreateCustomToolSheet() {
 
   const handleCreate = async (apiConfig: ApiConfig) => {
     try {
-      // Create a sanitized config object that matches the database schema
       const toolData = {
         name: tool.name || '',
         description: tool.description || '',
         icon_url: tool.iconUrl,
         instruction: tool.instruction || '',
         tags: tool.tags || [],
-        api_config: {
-          method: apiConfig.method,
-          url: apiConfig.url,
-          headers: apiConfig.headers || {},
-          queryParams: apiConfig.queryParams || {},
-          body: apiConfig.body || '',
-          isFormData: apiConfig.isFormData || false,
-        },
+        api_config: apiConfig,
       };
 
       const { error } = await supabase.from('tools').insert(toolData);
@@ -129,51 +102,25 @@ export function CreateCustomToolSheet() {
   const renderContent = () => {
     if (step === 'initial') {
       return (
-        <div className="grid gap-4">
-          <div className="grid gap-2">
-            <Label htmlFor="sample-request">Sample API Request</Label>
-            <Textarea
-              id="sample-request"
-              placeholder="e.g., GET https://api.example.com/users/123"
-              value={sampleRequest}
-              onChange={(e) => setSampleRequest(e.target.value)}
-            />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="purpose">Purpose (optional)</Label>
-            <Input
-              type="text"
-              id="purpose"
-              placeholder="e.g., Fetch user data"
-              value={purpose}
-              onChange={(e) => setPurpose(e.target.value)}
-            />
-          </div>
-          <div className="flex justify-between">
-            <Button variant="outline" asChild>
-              <label htmlFor="json-upload" className="cursor-pointer">
-                Import JSON
-              </label>
-              <input
-                type="file"
-                id="json-upload"
-                accept=".json"
-                className="hidden"
-                onChange={handleImportJSON}
-              />
-            </Button>
-            <Button onClick={handleGenerateWithAI}>Generate with AI</Button>
-          </div>
-        </div>
+        <InitialToolForm
+          sampleRequest={sampleRequest}
+          purpose={purpose}
+          onSampleRequestChange={setSampleRequest}
+          onPurposeChange={setPurpose}
+          onGenerateWithAI={handleGenerateWithAI}
+          onImportJSON={handleImportJSON}
+        />
       );
     }
 
     if (step === 'configuration' && tool) {
-      return <APIConfigurationForm 
-        tool={tool} 
-        onCreate={handleCreate} 
-        onBack={() => setStep('initial')} 
-      />;
+      return (
+        <APIConfigurationForm
+          tool={tool}
+          onCreate={handleCreate}
+          onBack={() => setStep('initial')}
+        />
+      );
     }
 
     return null;
