@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Handle, Position } from '@xyflow/react';
 import { X, RefreshCw, Settings } from 'lucide-react';
@@ -29,7 +30,8 @@ export function BaseNode({ id, data, selected }: BaseNodeProps) {
       case 'input':
         return (
           <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-            <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" 
+            <path 
+              d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" 
               strokeWidth="2" 
               strokeLinecap="round" 
               strokeLinejoin="round"
@@ -108,11 +110,10 @@ export function BaseNode({ id, data, selected }: BaseNodeProps) {
           </div>
         </div>
 
-        {/* Connection point */}
         <Handle 
           type="source" 
           position={Position.Right} 
-          className="!absolute !right-0 !top-1/2 !translate-y-1/2 !w-4 !h-4 !rounded-full !bg-blue-500 !border-2 !border-white" 
+          className="!absolute !right-0 !top-1/2 !translate-y-1/2 !w-4 !h-4 !rounded-full !bg-blue-500 !border-2 !border-white"
         />
       </div>
       
