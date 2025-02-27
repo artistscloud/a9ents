@@ -22,7 +22,37 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import '@xyflow/react/dist/style.css';
 
-// Define a single node type that will be used for all nodes
+// Define types for node data
+interface BaseNodeData {
+  label: string;
+  description?: string;
+}
+
+interface InputNodeData extends BaseNodeData {
+  inputType: 'text' | 'file' | 'json';
+}
+
+interface LLMNodeData extends BaseNodeData {
+  model: string;
+  systemPrompt: string;
+  temperature: number;
+}
+
+interface KBNodeData extends BaseNodeData {
+  knowledgeBase: string;
+  searchType?: 'semantic' | 'keyword' | 'hybrid';
+}
+
+interface LogicNodeData extends BaseNodeData {
+  conditionType: 'equals' | 'contains' | 'greater-than' | 'less-than';
+  value: string;
+}
+
+type NodeData = BaseNodeData | InputNodeData | LLMNodeData | KBNodeData | LogicNodeData;
+
+// Define a type for our custom node
+type CustomNode = Node<NodeData>;
+
 const nodeTypes = {
   input: BaseNode,
   output: BaseNode,
@@ -63,10 +93,10 @@ const nodeTypes = {
 
 export function WorkflowBuilder() {
   const { id } = useParams<{ id: string }>();
-  const [nodes, setNodes, onNodesChange] = useNodesState([]);
+  const [nodes, setNodes, onNodesChange] = useNodesState<NodeData>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [activeCategory, setActiveCategory] = useState('general');
-  const [selectedNode, setSelectedNode] = useState<Node | null>(null);
+  const [selectedNode, setSelectedNode] = useState<CustomNode | null>(null);
 
   const { data: workflow, isLoading } = useQuery({
     queryKey: ['workflow', id],
@@ -127,13 +157,13 @@ export function WorkflowBuilder() {
     setSelectedNode(node);
   }, []);
 
-  const updateNodeData = (nodeId: string, data: any) => {
+  const updateNodeData = (nodeId: string, newData: Partial<NodeData>) => {
     setNodes((nds) =>
       nds.map((node) => {
         if (node.id === nodeId) {
           return {
             ...node,
-            data: { ...node.data, ...data },
+            data: { ...node.data, ...newData },
           };
         }
         return node;
@@ -141,14 +171,20 @@ export function WorkflowBuilder() {
     );
   };
 
-  const renderNodeConfig = (node: Node) => {
+  const renderNodeConfig = (node: CustomNode) => {
     switch (node.type) {
-      case 'input':
+      case 'input': {
+        const data = node.data as InputNodeData;
         return (
           <div className="space-y-4">
             <div className="space-y-2">
               <Label>Input Type</Label>
-              <Select onValueChange={(value) => updateNodeData(node.id, { inputType: value })} defaultValue={node.data.inputType || "text"}>
+              <Select 
+                value={data.inputType} 
+                onValueChange={(value: 'text' | 'file' | 'json') => 
+                  updateNodeData(node.id, { inputType: value })
+                }
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select input type" />
                 </SelectTrigger>
@@ -162,7 +198,7 @@ export function WorkflowBuilder() {
             <div className="space-y-2">
               <Label>Label</Label>
               <Input 
-                value={node.data.label || ''} 
+                value={data.label} 
                 onChange={(e) => updateNodeData(node.id, { label: e.target.value })} 
                 placeholder="Enter label"
               />
@@ -170,22 +206,27 @@ export function WorkflowBuilder() {
             <div className="space-y-2">
               <Label>Description</Label>
               <Textarea 
-                value={node.data.description || ''} 
+                value={data.description || ''} 
                 onChange={(e) => updateNodeData(node.id, { description: e.target.value })} 
                 placeholder="Enter description"
               />
             </div>
           </div>
         );
+      }
 
       case 'llm-openai':
       case 'llm-anthropic':
-      case 'llm-perplexity':
+      case 'llm-perplexity': {
+        const data = node.data as LLMNodeData;
         return (
           <div className="space-y-4">
             <div className="space-y-2">
               <Label>Model</Label>
-              <Select onValueChange={(value) => updateNodeData(node.id, { model: value })} defaultValue={node.data.model}>
+              <Select 
+                value={data.model} 
+                onValueChange={(value) => updateNodeData(node.id, { model: value })}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select model" />
                 </SelectTrigger>
@@ -214,7 +255,7 @@ export function WorkflowBuilder() {
             <div className="space-y-2">
               <Label>System Prompt</Label>
               <Textarea 
-                value={node.data.systemPrompt || ''} 
+                value={data.systemPrompt} 
                 onChange={(e) => updateNodeData(node.id, { systemPrompt: e.target.value })} 
                 placeholder="Enter system prompt"
               />
@@ -226,21 +267,26 @@ export function WorkflowBuilder() {
                 min="0" 
                 max="2" 
                 step="0.1"
-                value={node.data.temperature || 0.7} 
+                value={data.temperature} 
                 onChange={(e) => updateNodeData(node.id, { temperature: parseFloat(e.target.value) })} 
               />
             </div>
           </div>
         );
+      }
 
       case 'kb-reader':
       case 'kb-writer':
-      case 'kb-search':
+      case 'kb-search': {
+        const data = node.data as KBNodeData;
         return (
           <div className="space-y-4">
             <div className="space-y-2">
               <Label>Knowledge Base</Label>
-              <Select onValueChange={(value) => updateNodeData(node.id, { knowledgeBase: value })} defaultValue={node.data.knowledgeBase}>
+              <Select 
+                value={data.knowledgeBase} 
+                onValueChange={(value) => updateNodeData(node.id, { knowledgeBase: value })}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select knowledge base" />
                 </SelectTrigger>
@@ -254,7 +300,12 @@ export function WorkflowBuilder() {
             {node.type === 'kb-search' && (
               <div className="space-y-2">
                 <Label>Search Type</Label>
-                <Select onValueChange={(value) => updateNodeData(node.id, { searchType: value })} defaultValue={node.data.searchType}>
+                <Select 
+                  value={data.searchType} 
+                  onValueChange={(value: 'semantic' | 'keyword' | 'hybrid') => 
+                    updateNodeData(node.id, { searchType: value })
+                  }
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Select search type" />
                   </SelectTrigger>
@@ -268,6 +319,7 @@ export function WorkflowBuilder() {
             )}
           </div>
         );
+      }
 
       case 'logic-condition':
         return (
@@ -299,13 +351,14 @@ export function WorkflowBuilder() {
 
       // Add more node type configurations as needed...
 
-      default:
+      default: {
+        const data = node.data as BaseNodeData;
         return (
           <div className="space-y-4">
             <div className="space-y-2">
               <Label>Label</Label>
               <Input 
-                value={node.data.label || ''} 
+                value={data.label} 
                 onChange={(e) => updateNodeData(node.id, { label: e.target.value })} 
                 placeholder="Enter label"
               />
@@ -313,13 +366,14 @@ export function WorkflowBuilder() {
             <div className="space-y-2">
               <Label>Description</Label>
               <Textarea 
-                value={node.data.description || ''} 
+                value={data.description || ''} 
                 onChange={(e) => updateNodeData(node.id, { description: e.target.value })} 
                 placeholder="Enter description"
               />
             </div>
           </div>
         );
+      }
     }
   };
 
@@ -361,7 +415,9 @@ export function WorkflowBuilder() {
         </div>
         {selectedNode && (
           <div className="w-80 border-l p-4 bg-background">
-            <h3 className="text-lg font-semibold mb-4">{selectedNode.data.label || selectedNode.type} Configuration</h3>
+            <h3 className="text-lg font-semibold mb-4">
+              {(selectedNode.data as BaseNodeData).label || selectedNode.type} Configuration
+            </h3>
             {renderNodeConfig(selectedNode)}
           </div>
         )}
