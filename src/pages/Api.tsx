@@ -18,6 +18,9 @@ export default function Api() {
   const { data: apiKeys, refetch: refetchApiKeys } = useQuery({
     queryKey: ['api-keys'],
     queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
       const { data, error } = await supabase
         .from('api_keys')
         .select('*')
@@ -39,6 +42,16 @@ export default function Api() {
     }
 
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast({
+          title: "Error",
+          description: "You must be logged in to create an API key",
+          variant: "destructive",
+        });
+        return;
+      }
+
       const keyBuffer = crypto.getRandomValues(new Uint8Array(32));
       const key = Array.from(keyBuffer)
         .map(b => b.toString(16).padStart(2, '0'))
@@ -46,11 +59,12 @@ export default function Api() {
       
       const { error } = await supabase
         .from('api_keys')
-        .insert([{
+        .insert({
           name: newKeyName,
           key: key,
+          user_id: user.id,
           expires_at: null
-        }]);
+        });
 
       if (error) throw error;
 
@@ -62,6 +76,7 @@ export default function Api() {
       setNewKeyName("");
       refetchApiKeys();
     } catch (error) {
+      console.error('Error creating API key:', error);
       toast({
         title: "Error",
         description: "Failed to create API key",
