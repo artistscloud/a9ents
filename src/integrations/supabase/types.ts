@@ -126,6 +126,36 @@ export type Database = {
         }
         Relationships: []
       }
+      llm_configurations: {
+        Row: {
+          api_key: string
+          created_at: string
+          created_by: string
+          id: string
+          is_enabled: boolean | null
+          provider: Database["public"]["Enums"]["llm_provider"]
+          updated_at: string
+        }
+        Insert: {
+          api_key: string
+          created_at?: string
+          created_by: string
+          id?: string
+          is_enabled?: boolean | null
+          provider: Database["public"]["Enums"]["llm_provider"]
+          updated_at?: string
+        }
+        Update: {
+          api_key?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          is_enabled?: boolean | null
+          provider?: Database["public"]["Enums"]["llm_provider"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -331,6 +361,15 @@ export type Database = {
     Enums: {
       action_type: "api" | "email" | "agent" | "llm" | "tool"
       condition_type: "if" | "switch" | "wait"
+      llm_provider:
+        | "openai"
+        | "anthropic"
+        | "gemini"
+        | "grok"
+        | "openrouter"
+        | "mistral"
+        | "groq"
+        | "llama"
       trigger_type: "webhook" | "schedule" | "manual" | "event"
       user_role: "admin" | "user"
       workflow_node_type: "trigger" | "action" | "condition"
