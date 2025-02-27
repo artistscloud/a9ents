@@ -28,7 +28,8 @@ import {
   UserCircle, 
   Book, 
   Key,
-  ChevronDown 
+  ChevronDown,
+  Shield 
 } from "lucide-react";
 
 export function GlobalNav() {
@@ -36,17 +37,40 @@ export function GlobalNav() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       setUser(session?.user ?? null);
+      if (session?.user) {
+        // Check if user is admin
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', session.user.id)
+          .single();
+        
+        setIsAdmin(profile?.role === 'admin');
+      }
       setLoading(false);
     });
 
     // Listen for authentication state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setUser(session?.user ?? null);
+      if (session?.user) {
+        // Check if user is admin
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', session.user.id)
+          .single();
+        
+        setIsAdmin(profile?.role === 'admin');
+      } else {
+        setIsAdmin(false);
+      }
     });
 
     return () => subscription.unsubscribe();
@@ -107,6 +131,12 @@ export function GlobalNav() {
                           <LayoutDashboard className="mr-2 h-4 w-4" />
                           Dashboard
                         </DropdownMenuItem>
+                        {isAdmin && (
+                          <DropdownMenuItem onSelect={() => navigate('/admin')}>
+                            <Shield className="mr-2 h-4 w-4" />
+                            Admin Panel
+                          </DropdownMenuItem>
+                        )}
                         <DropdownMenuItem onSelect={() => navigate('/api')}>
                           <Key className="mr-2 h-4 w-4" />
                           API
