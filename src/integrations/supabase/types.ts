@@ -14,24 +14,48 @@ export type Database = {
           created_at: string | null
           description: string | null
           id: string
+          knowledgebase_id: string | null
           name: string
+          selected_tools: string[] | null
           tools: Json | null
+          workflow_id: string | null
         }
         Insert: {
           created_at?: string | null
           description?: string | null
           id?: string
+          knowledgebase_id?: string | null
           name: string
+          selected_tools?: string[] | null
           tools?: Json | null
+          workflow_id?: string | null
         }
         Update: {
           created_at?: string | null
           description?: string | null
           id?: string
+          knowledgebase_id?: string | null
           name?: string
+          selected_tools?: string[] | null
           tools?: Json | null
+          workflow_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "agents_knowledgebase_id_fkey"
+            columns: ["knowledgebase_id"]
+            isOneToOne: false
+            referencedRelation: "knowledgebase"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agents_workflow_id_fkey"
+            columns: ["workflow_id"]
+            isOneToOne: false
+            referencedRelation: "workflows"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       knowledgebase: {
         Row: {

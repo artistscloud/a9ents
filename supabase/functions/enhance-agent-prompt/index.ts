@@ -26,12 +26,17 @@ serve(async (req) => {
 
     const systemPrompt = `You are an AI expert at creating detailed and comprehensive agent descriptions. 
     Your task is to enhance the given job description by:
-    1. Adding specific technical requirements and capabilities
-    2. Including clear success criteria
-    3. Specifying input/output formats if relevant
-    4. Adding any necessary context or background information
-    5. Incorporating best practices and industry standards
-    Keep the enhanced description clear, professional, and well-structured.`;
+    1. Adding specific technical capabilities and requirements
+    2. Including clear success criteria and performance metrics
+    3. Defining input/output formats and data structures
+    4. Specifying any necessary API integrations or external services
+    5. Adding context about the business domain and use cases
+    6. Incorporating security considerations and best practices
+    7. Detailing error handling and edge cases
+    8. Suggesting potential optimizations and improvements
+
+    Structure the description in clear sections with headings. 
+    Keep the tone professional and technical while maintaining readability.`;
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -53,7 +58,16 @@ serve(async (req) => {
 
     let exampleOutput = null;
     if (enhanceOutput) {
-      // Generate example output based on the enhanced description
+      const outputPrompt = `Create a comprehensive example output that demonstrates:
+      1. The exact format and structure of the agent's response
+      2. All relevant data fields and their values
+      3. Any metadata or processing information
+      4. Success/error status indicators
+      5. Performance metrics or timing data
+      6. Any relevant logs or debug information
+      
+      Base this on the following agent description:\n${enhancedText}`;
+
       const outputResponse = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
         headers: {
@@ -65,12 +79,9 @@ serve(async (req) => {
           messages: [
             { 
               role: 'system', 
-              content: 'You are an expert at generating example outputs for AI agents. Create a realistic and detailed example output that matches the given job description.' 
+              content: 'You are an expert at generating detailed, realistic example outputs for AI agents.' 
             },
-            { 
-              role: 'user', 
-              content: `Generate an example output for an agent with this job description:\n${enhancedText}` 
-            }
+            { role: 'user', content: outputPrompt }
           ],
         }),
       });
