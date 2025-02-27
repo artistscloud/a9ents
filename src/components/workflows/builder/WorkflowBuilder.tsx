@@ -1,4 +1,3 @@
-
 import { useCallback, useState } from 'react';
 import {
   ReactFlow,
@@ -19,6 +18,8 @@ import { WorkflowNavigation } from './WorkflowNavigation';
 import { BaseNode } from './nodes/BaseNode';
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 import '@xyflow/react/dist/style.css';
 
 // Define a single node type that will be used for all nodes
@@ -126,6 +127,202 @@ export function WorkflowBuilder() {
     setSelectedNode(node);
   }, []);
 
+  const updateNodeData = (nodeId: string, data: any) => {
+    setNodes((nds) =>
+      nds.map((node) => {
+        if (node.id === nodeId) {
+          return {
+            ...node,
+            data: { ...node.data, ...data },
+          };
+        }
+        return node;
+      })
+    );
+  };
+
+  const renderNodeConfig = (node: Node) => {
+    switch (node.type) {
+      case 'input':
+        return (
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Input Type</Label>
+              <Select onValueChange={(value) => updateNodeData(node.id, { inputType: value })} defaultValue={node.data.inputType || "text"}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select input type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="text">Text</SelectItem>
+                  <SelectItem value="file">File</SelectItem>
+                  <SelectItem value="json">JSON</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Label</Label>
+              <Input 
+                value={node.data.label || ''} 
+                onChange={(e) => updateNodeData(node.id, { label: e.target.value })} 
+                placeholder="Enter label"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Description</Label>
+              <Textarea 
+                value={node.data.description || ''} 
+                onChange={(e) => updateNodeData(node.id, { description: e.target.value })} 
+                placeholder="Enter description"
+              />
+            </div>
+          </div>
+        );
+
+      case 'llm-openai':
+      case 'llm-anthropic':
+      case 'llm-perplexity':
+        return (
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Model</Label>
+              <Select onValueChange={(value) => updateNodeData(node.id, { model: value })} defaultValue={node.data.model}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select model" />
+                </SelectTrigger>
+                <SelectContent>
+                  {node.type === 'llm-openai' && (
+                    <>
+                      <SelectItem value="gpt-4">GPT-4</SelectItem>
+                      <SelectItem value="gpt-3.5-turbo">GPT-3.5 Turbo</SelectItem>
+                    </>
+                  )}
+                  {node.type === 'llm-anthropic' && (
+                    <>
+                      <SelectItem value="claude-3-opus">Claude 3 Opus</SelectItem>
+                      <SelectItem value="claude-3-sonnet">Claude 3 Sonnet</SelectItem>
+                    </>
+                  )}
+                  {node.type === 'llm-perplexity' && (
+                    <>
+                      <SelectItem value="pplx-7b">PPLX 7B</SelectItem>
+                      <SelectItem value="pplx-70b">PPLX 70B</SelectItem>
+                    </>
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>System Prompt</Label>
+              <Textarea 
+                value={node.data.systemPrompt || ''} 
+                onChange={(e) => updateNodeData(node.id, { systemPrompt: e.target.value })} 
+                placeholder="Enter system prompt"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Temperature</Label>
+              <Input 
+                type="number" 
+                min="0" 
+                max="2" 
+                step="0.1"
+                value={node.data.temperature || 0.7} 
+                onChange={(e) => updateNodeData(node.id, { temperature: parseFloat(e.target.value) })} 
+              />
+            </div>
+          </div>
+        );
+
+      case 'kb-reader':
+      case 'kb-writer':
+      case 'kb-search':
+        return (
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Knowledge Base</Label>
+              <Select onValueChange={(value) => updateNodeData(node.id, { knowledgeBase: value })} defaultValue={node.data.knowledgeBase}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select knowledge base" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="main">Main KB</SelectItem>
+                  <SelectItem value="customer-support">Customer Support KB</SelectItem>
+                  <SelectItem value="documentation">Documentation KB</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {node.type === 'kb-search' && (
+              <div className="space-y-2">
+                <Label>Search Type</Label>
+                <Select onValueChange={(value) => updateNodeData(node.id, { searchType: value })} defaultValue={node.data.searchType}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select search type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="semantic">Semantic Search</SelectItem>
+                    <SelectItem value="keyword">Keyword Search</SelectItem>
+                    <SelectItem value="hybrid">Hybrid Search</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          </div>
+        );
+
+      case 'logic-condition':
+        return (
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Condition Type</Label>
+              <Select onValueChange={(value) => updateNodeData(node.id, { conditionType: value })} defaultValue={node.data.conditionType}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select condition type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="equals">Equals</SelectItem>
+                  <SelectItem value="contains">Contains</SelectItem>
+                  <SelectItem value="greater-than">Greater Than</SelectItem>
+                  <SelectItem value="less-than">Less Than</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Value</Label>
+              <Input 
+                value={node.data.value || ''} 
+                onChange={(e) => updateNodeData(node.id, { value: e.target.value })} 
+                placeholder="Enter comparison value"
+              />
+            </div>
+          </div>
+        );
+
+      // Add more node type configurations as needed...
+
+      default:
+        return (
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Label</Label>
+              <Input 
+                value={node.data.label || ''} 
+                onChange={(e) => updateNodeData(node.id, { label: e.target.value })} 
+                placeholder="Enter label"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Description</Label>
+              <Textarea 
+                value={node.data.description || ''} 
+                onChange={(e) => updateNodeData(node.id, { description: e.target.value })} 
+                placeholder="Enter description"
+              />
+            </div>
+          </div>
+        );
+    }
+  };
+
   if (isLoading) {
     return <div>Loading workflow...</div>;
   }
@@ -162,33 +359,10 @@ export function WorkflowBuilder() {
             <Controls />
           </ReactFlow>
         </div>
-        {selectedNode && selectedNode.type === 'input' && (
+        {selectedNode && (
           <div className="w-80 border-l p-4 bg-background">
-            <h3 className="text-lg font-semibold mb-4">Input Configuration</h3>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-1">Input Type</label>
-                <select className="w-full p-2 border rounded">
-                  <option value="text">Text</option>
-                  <option value="file">File</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Label</label>
-                <Input type="text" placeholder="Enter label" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Description</label>
-                <Textarea placeholder="Enter description" />
-              </div>
-              {/* File-specific options */}
-              <div className="flex items-center gap-2">
-                <input type="checkbox" id="processFiles" />
-                <label htmlFor="processFiles" className="text-sm">
-                  Process Files into Text
-                </label>
-              </div>
-            </div>
+            <h3 className="text-lg font-semibold mb-4">{selectedNode.data.label || selectedNode.type} Configuration</h3>
+            {renderNodeConfig(selectedNode)}
           </div>
         )}
       </div>
