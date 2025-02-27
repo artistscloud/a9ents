@@ -14,36 +14,18 @@ import { useToast } from "@/components/ui/use-toast";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Switch } from "@/components/ui/switch";
-import { Separator } from "@/components/ui/separator";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
-import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
+import { APIConfigurationForm } from "./APIConfigurationForm";
+
+// Make the interface match the JSON structure expected by Supabase
+interface ApiConfig {
+  method: string;
+  url: string;
+  headers: Record<string, string>;
+  queryParams: Record<string, string>;
+  body: string;
+}
 
 interface CustomTool {
   name: string;
@@ -53,35 +35,6 @@ interface CustomTool {
   tags: string[];
   apiConfig: ApiConfig;
 }
-
-interface ApiConfig {
-  method: string;
-  url: string;
-  headers: Record<string, string>;
-  queryParams: Record<string, string>;
-  body: string;
-}
-
-const apiConfigSchema = z.object({
-  method: z.string().min(1, { message: "Method is required" }),
-  url: z.string().url({ message: "Valid URL is required" }),
-  headers: z.record(z.string(), z.string()).optional(),
-  queryParams: z.record(z.string(), z.string()).optional(),
-  body: z.string().optional(),
-});
-
-const customToolSchema = z.object({
-  name: z.string().min(3, { message: "Name must be at least 3 characters" }),
-  description: z
-    .string()
-    .min(10, { message: "Description must be at least 10 characters" }),
-  instruction: z
-    .string()
-    .min(10, { message: "Instruction must be at least 10 characters" }),
-  iconUrl: z.string().url({ message: "Valid URL is required" }).optional(),
-  tags: z.array(z.string()).optional(),
-  apiConfig: apiConfigSchema,
-});
 
 export function CreateCustomToolSheet() {
   const [step, setStep] = useState<'initial' | 'configuration'>('initial');
@@ -134,23 +87,23 @@ export function CreateCustomToolSheet() {
 
   const handleCreate = async (apiConfig: ApiConfig) => {
     try {
-      // Ensure we have all required fields with default values
-      const completeConfig: ApiConfig = {
-        method: apiConfig.method || 'GET',
-        url: apiConfig.url || '',
-        headers: apiConfig.headers || {},
-        queryParams: apiConfig.queryParams || {},
-        body: apiConfig.body || '',
-      };
-
-      const { error } = await supabase.from('tools').insert({
+      // Create a sanitized config object that matches the database schema
+      const toolData = {
         name: tool.name || '',
         description: tool.description || '',
         icon_url: tool.iconUrl,
         instruction: tool.instruction || '',
         tags: tool.tags || [],
-        api_config: completeConfig,
-      });
+        api_config: {
+          method: apiConfig.method,
+          url: apiConfig.url,
+          headers: apiConfig.headers || {},
+          queryParams: apiConfig.queryParams || {},
+          body: apiConfig.body || '',
+        } as Record<string, unknown>, // Cast to a generic JSON object type
+      };
+
+      const { error } = await supabase.from('tools').insert(toolData);
 
       if (error) throw error;
 

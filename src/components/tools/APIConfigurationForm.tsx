@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,78 +14,47 @@ interface Field {
 }
 
 interface ApiConfig {
-  method: 'GET' | 'POST' | 'PUT' | 'DELETE';
+  method: string;
   url: string;
-  headers: Field[];
-  queryParams: Field[];
-  body: Field[];
-  isFormData: boolean;
+  headers: Record<string, string>;
+  queryParams: Record<string, string>;
+  body: string;
 }
 
 interface APIConfigurationFormProps {
-  initialData?: {
+  tool?: {
     title?: string;
     name?: string;
     description?: string;
     instruction?: string;
     iconUrl?: string;
     tags?: string[];
-    apiConfig?: ApiConfig;
+    apiConfig?: Partial<ApiConfig>;
   };
-  onSubmit: (config: ApiConfig) => void;
+  onCreate: (config: ApiConfig) => void;
   onBack: () => void;
 }
 
-export function APIConfigurationForm({ initialData, onSubmit, onBack }: APIConfigurationFormProps) {
+export function APIConfigurationForm({ tool, onCreate, onBack }: APIConfigurationFormProps) {
   const [config, setConfig] = useState<ApiConfig>({
-    method: 'GET',
-    url: '',
-    headers: [],
-    queryParams: [],
-    body: [],
-    isFormData: false,
-    ...initialData?.apiConfig,
+    method: tool?.apiConfig?.method || 'GET',
+    url: tool?.apiConfig?.url || '',
+    headers: tool?.apiConfig?.headers || {},
+    queryParams: tool?.apiConfig?.queryParams || {},
+    body: tool?.apiConfig?.body || '',
   });
 
   const [formData, setFormData] = useState({
-    title: initialData?.title || '',
-    name: initialData?.name || '',
-    description: initialData?.description || '',
-    instruction: initialData?.instruction || '',
-    iconUrl: initialData?.iconUrl || '',
-    tags: initialData?.tags || [],
+    title: tool?.title || '',
+    name: tool?.name || '',
+    description: tool?.description || '',
+    instruction: tool?.instruction || '',
+    iconUrl: tool?.iconUrl || '',
+    tags: tool?.tags || [],
   });
 
-  const addField = (type: 'headers' | 'queryParams' | 'body') => {
-    setConfig(prev => ({
-      ...prev,
-      [type]: [...prev[type], { key: '', value: '', description: '' }],
-    }));
-  };
-
-  const removeField = (type: 'headers' | 'queryParams' | 'body', index: number) => {
-    setConfig(prev => ({
-      ...prev,
-      [type]: prev[type].filter((_, i) => i !== index),
-    }));
-  };
-
-  const updateField = (
-    type: 'headers' | 'queryParams' | 'body',
-    index: number,
-    field: string,
-    value: string
-  ) => {
-    setConfig(prev => ({
-      ...prev,
-      [type]: prev[type].map((item, i) => 
-        i === index ? { ...item, [field]: value } : item
-      ),
-    }));
-  };
-
   const handleSubmit = () => {
-    onSubmit(config);
+    onCreate(config);
   };
 
   return (
@@ -150,7 +118,7 @@ export function APIConfigurationForm({ initialData, onSubmit, onBack }: APIConfi
           <Label>Method <span className="text-red-500">*</span></Label>
           <Select
             value={config.method}
-            onValueChange={(value: 'GET' | 'POST' | 'PUT' | 'DELETE') => 
+            onValueChange={(value: string) => 
               setConfig(prev => ({ ...prev, method: value }))
             }
           >
@@ -168,37 +136,48 @@ export function APIConfigurationForm({ initialData, onSubmit, onBack }: APIConfi
 
         <div className="space-y-4">
           <div className="flex justify-between items-center">
-            <Label>Headers ({config.headers.length})</Label>
+            <Label>Headers ({Object.keys(config.headers).length})</Label>
             <Button
               variant="outline"
               size="sm"
-              onClick={() => addField('headers')}
+              onClick={() => setConfig(prev => ({
+                ...prev,
+                headers: { ...prev.headers, '': '' }
+              }))}
             >
               <Plus className="h-4 w-4" />
               Add field
             </Button>
           </div>
-          {config.headers.map((header, index) => (
+          {Object.entries(config.headers).map(([key, value], index) => (
             <div key={index} className="flex gap-2">
               <Input
                 placeholder="Key"
-                value={header.key}
-                onChange={(e) => updateField('headers', index, 'key', e.target.value)}
+                value={key}
+                onChange={(e) => {
+                  const newHeaders = { ...config.headers };
+                  delete newHeaders[key];
+                  newHeaders[e.target.value] = value;
+                  setConfig(prev => ({ ...prev, headers: newHeaders }));
+                }}
               />
               <Input
                 placeholder="Value"
-                value={header.value}
-                onChange={(e) => updateField('headers', index, 'value', e.target.value)}
-              />
-              <Input
-                placeholder="Description"
-                value={header.description}
-                onChange={(e) => updateField('headers', index, 'description', e.target.value)}
+                value={value}
+                onChange={(e) => {
+                  const newHeaders = { ...config.headers };
+                  newHeaders[key] = e.target.value;
+                  setConfig(prev => ({ ...prev, headers: newHeaders }));
+                }}
               />
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => removeField('headers', index)}
+                onClick={() => {
+                  const newHeaders = { ...config.headers };
+                  delete newHeaders[key];
+                  setConfig(prev => ({ ...prev, headers: newHeaders }));
+                }}
               >
                 <X className="h-4 w-4" />
               </Button>
@@ -208,37 +187,48 @@ export function APIConfigurationForm({ initialData, onSubmit, onBack }: APIConfi
 
         <div className="space-y-4">
           <div className="flex justify-between items-center">
-            <Label>Query Parameters ({config.queryParams.length})</Label>
+            <Label>Query Parameters ({Object.keys(config.queryParams).length})</Label>
             <Button
               variant="outline"
               size="sm"
-              onClick={() => addField('queryParams')}
+              onClick={() => setConfig(prev => ({
+                ...prev,
+                queryParams: { ...prev.queryParams, '': '' }
+              }))}
             >
               <Plus className="h-4 w-4" />
               Add field
             </Button>
           </div>
-          {config.queryParams.map((param, index) => (
+          {Object.entries(config.queryParams).map(([key, value], index) => (
             <div key={index} className="flex gap-2">
               <Input
                 placeholder="Key"
-                value={param.key}
-                onChange={(e) => updateField('queryParams', index, 'key', e.target.value)}
+                value={key}
+                onChange={(e) => {
+                  const newParams = { ...config.queryParams };
+                  delete newParams[key];
+                  newParams[e.target.value] = value;
+                  setConfig(prev => ({ ...prev, queryParams: newParams }));
+                }}
               />
               <Input
                 placeholder="Value"
-                value={param.value}
-                onChange={(e) => updateField('queryParams', index, 'value', e.target.value)}
-              />
-              <Input
-                placeholder="Description"
-                value={param.description}
-                onChange={(e) => updateField('queryParams', index, 'description', e.target.value)}
+                value={value}
+                onChange={(e) => {
+                  const newParams = { ...config.queryParams };
+                  newParams[key] = e.target.value;
+                  setConfig(prev => ({ ...prev, queryParams: newParams }));
+                }}
               />
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => removeField('queryParams', index)}
+                onClick={() => {
+                  const newParams = { ...config.queryParams };
+                  delete newParams[key];
+                  setConfig(prev => ({ ...prev, queryParams: newParams }));
+                }}
               >
                 <X className="h-4 w-4" />
               </Button>
@@ -247,49 +237,58 @@ export function APIConfigurationForm({ initialData, onSubmit, onBack }: APIConfi
         </div>
 
         <div className="space-y-4">
-          <div className="space-y-4">
-            <div className="flex items-center space-x-2">
-              <Switch
-                id="form-data"
-                checked={config.isFormData}
-                onCheckedChange={(checked) => setConfig(prev => ({ ...prev, isFormData: checked }))}
-              />
-              <Label htmlFor="form-data">The API call body is in form data</Label>
-            </div>
+          <div className="flex items-center space-x-2">
+            <Switch
+              id="form-data"
+              checked={config.isFormData}
+              onCheckedChange={(checked) => setConfig(prev => ({ ...prev, isFormData: checked }))}
+            />
+            <Label htmlFor="form-data">The API call body is in form data</Label>
           </div>
 
           <div className="flex justify-between items-center">
-            <Label>Body ({config.body.length})</Label>
+            <Label>Body ({Object.keys(config.body).length})</Label>
             <Button
               variant="outline"
               size="sm"
-              onClick={() => addField('body')}
+              onClick={() => setConfig(prev => ({
+                ...prev,
+                body: { ...prev.body, '': '' }
+              }))}
             >
               <Plus className="h-4 w-4" />
               Add field
             </Button>
           </div>
-          {config.body.map((bodyField, index) => (
+          {Object.entries(config.body).map(([key, value], index) => (
             <div key={index} className="flex gap-2">
               <Input
                 placeholder="Key"
-                value={bodyField.key}
-                onChange={(e) => updateField('body', index, 'key', e.target.value)}
+                value={key}
+                onChange={(e) => {
+                  const newBody = { ...config.body };
+                  delete newBody[key];
+                  newBody[e.target.value] = value;
+                  setConfig(prev => ({ ...prev, body: newBody }));
+                }}
               />
               <Input
                 placeholder="Value"
-                value={bodyField.value}
-                onChange={(e) => updateField('body', index, 'value', e.target.value)}
-              />
-              <Input
-                placeholder="Description"
-                value={bodyField.description}
-                onChange={(e) => updateField('body', index, 'description', e.target.value)}
+                value={value}
+                onChange={(e) => {
+                  const newBody = { ...config.body };
+                  newBody[key] = e.target.value;
+                  setConfig(prev => ({ ...prev, body: newBody }));
+                }}
               />
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => removeField('body', index)}
+                onClick={() => {
+                  const newBody = { ...config.body };
+                  delete newBody[key];
+                  setConfig(prev => ({ ...prev, body: newBody }));
+                }}
               >
                 <X className="h-4 w-4" />
               </Button>
