@@ -16,6 +16,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { APIConfigurationForm } from "./APIConfigurationForm";
 import { InitialToolForm } from "./InitialToolForm";
 import { ApiConfig, CustomTool, GenerateToolResponse, ToolData } from "./types";
+import { Json } from "@/integrations/supabase/types";
 
 export function CreateCustomToolSheet() {
   const [step, setStep] = useState<'initial' | 'configuration'>('initial');
