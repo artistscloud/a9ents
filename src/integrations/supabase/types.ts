@@ -113,25 +113,37 @@ export type Database = {
       }
       tools: {
         Row: {
+          api_config: Json | null
           created_at: string | null
           description: string | null
           function: string | null
+          icon_url: string | null
           id: string
+          instruction: string | null
           name: string
+          tags: string[] | null
         }
         Insert: {
+          api_config?: Json | null
           created_at?: string | null
           description?: string | null
           function?: string | null
+          icon_url?: string | null
           id?: string
+          instruction?: string | null
           name: string
+          tags?: string[] | null
         }
         Update: {
+          api_config?: Json | null
           created_at?: string | null
           description?: string | null
           function?: string | null
+          icon_url?: string | null
           id?: string
+          instruction?: string | null
           name?: string
+          tags?: string[] | null
         }
         Relationships: []
       }

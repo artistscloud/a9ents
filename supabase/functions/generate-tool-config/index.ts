@@ -28,14 +28,23 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: 'You are an API configuration expert. Given a sample API request and optional purpose, generate a complete API tool configuration.'
+            content: `You are an API configuration expert. You analyze API requests and generate structured configurations.
+            Always return valid JSON with these fields:
+            - title (human-readable name)
+            - name (snake_case identifier)
+            - description (clear explanation)
+            - instruction (how to use)
+            - iconUrl (optional URL)
+            - tags (array of relevant keywords)
+            - apiConfig (method, url, headers, queryParams, body)
+            `
           },
           {
             role: 'user',
             content: `
               Sample request: ${sampleRequest}
               ${purpose ? `Purpose: ${purpose}` : ''}
-              Generate a complete API tool configuration including title, name (snake_case), description, and parsed API details.
+              Generate a complete API tool configuration including all required fields.
             `
           }
         ],
