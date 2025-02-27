@@ -47,6 +47,19 @@ export function BaseNode({ id, data, selected }: BaseNodeProps) {
     setShowOutputs(!showOutputs);
   };
 
+  const handleClassName = [
+    '!absolute',
+    '!right-0',
+    '!top-1/2',
+    '!-translate-y-1/2',
+    '!w-4',
+    '!h-4',
+    '!rounded-full',
+    '!bg-blue-500',
+    '!border-2',
+    '!border-white'
+  ].join(' ');
+
   return (
     <div className="relative">
       <div className="border border-blue-300 rounded-lg w-80 bg-white shadow-sm overflow-hidden">
@@ -113,7 +126,7 @@ export function BaseNode({ id, data, selected }: BaseNodeProps) {
         <Handle 
           type="source" 
           position={Position.Right} 
-          className="!absolute !right-0 !top-1/2 !-translate-y-1/2 !w-4 !h-4 !rounded-full !bg-blue-500 !border-2 !border-white"
+          className={handleClassName}
         />
       </div>
       
