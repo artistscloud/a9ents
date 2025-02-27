@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -18,7 +19,17 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Download, FileText, HelpCircle, LayoutDashboard, Settings, UserCircle, Book, Key } from "lucide-react";
+import { 
+  Download, 
+  FileText, 
+  HelpCircle, 
+  LayoutDashboard, 
+  Settings, 
+  UserCircle, 
+  Book, 
+  Key,
+  ChevronDown 
+} from "lucide-react";
 
 export function GlobalNav() {
   const navigate = useNavigate();
@@ -124,7 +135,7 @@ export function GlobalNav() {
                           Sign Out
                         </DropdownMenuItem>
                       </DropdownMenuContent>
-
+                    </DropdownMenu>
                     <DialogContent className="sm:max-w-[500px]">
                       <DialogHeader>
                         <DialogTitle>Settings</DialogTitle>
