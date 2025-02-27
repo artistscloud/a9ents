@@ -60,11 +60,17 @@ export function GlobalNav() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48">
-                  <DropdownMenuItem onSelect={() => navigate('/dashboard')}>
-                    Dashboard
+                  <DropdownMenuItem onSelect={() => navigate('/tools')}>
+                    Tools
                   </DropdownMenuItem>
-                  <DropdownMenuItem onSelect={() => navigate('/admin')}>
-                    Admin Panel
+                  <DropdownMenuItem onSelect={() => navigate('/agents')}>
+                    Agents
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => navigate('/workflows')}>
+                    Workflows
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => navigate('/knowledgebase')}>
+                    Knowledge Base
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onSelect={handleSignOut}>
