@@ -113,7 +113,7 @@ export function BaseNode({ id, data, selected }: BaseNodeProps) {
         <Handle 
           type="source" 
           position={Position.Right} 
-          className="!absolute !right-0 !top-1/2 !translate-y-1/2 !w-4 !h-4 !rounded-full !bg-blue-500 !border-2 !border-white"
+          className={"!absolute !right-0 !top-1/2 !translate-y-1/2 !w-4 !h-4 !rounded-full !bg-blue-500 !border-2 !border-white"}
         />
       </div>
       
