@@ -8,6 +8,7 @@ import { AgentDescriptionInput } from "./AgentDescriptionInput";
 import { AgentModelSettings } from "./AgentModelSettings";
 import { AgentToolsSelection } from "./AgentToolsSelection";
 import { AgentActionButtons } from "./AgentActionButtons";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface CreateAgentModalProps {
   open: boolean;
@@ -96,46 +97,48 @@ export function CreateAgentModal({ open, onOpenChange }: CreateAgentModalProps) 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px]">
-        <DialogHeader>
+      <DialogContent className="max-h-[90vh] p-0">
+        <DialogHeader className="p-6 pb-0">
           <DialogTitle>New agent</DialogTitle>
         </DialogHeader>
+        
+        <ScrollArea className="px-6 py-4 h-full">
+          <div className="space-y-6 pr-4">
+            <AgentDescriptionInput
+              jobDescription={jobDescription}
+              exampleOutput={exampleOutput}
+              onJobDescriptionChange={setJobDescription}
+              onExampleOutputChange={setExampleOutput}
+              onEnhance={handleEnhanceWithAI}
+              enhancing={enhancing}
+            />
 
-        <div className="space-y-6 py-4">
-          <AgentDescriptionInput
-            jobDescription={jobDescription}
-            exampleOutput={exampleOutput}
-            onJobDescriptionChange={setJobDescription}
-            onExampleOutputChange={setExampleOutput}
-            onEnhance={handleEnhanceWithAI}
-            enhancing={enhancing}
-          />
+            <Separator />
 
-          <Separator />
+            <AgentModelSettings
+              selectedProvider={selectedProvider}
+              selectedModel={selectedModel}
+              temperature={temperature}
+              maxTokens={maxTokens}
+              onProviderChange={setSelectedProvider}
+              onModelChange={setSelectedModel}
+              onTemperatureChange={setTemperature}
+              onMaxTokensChange={setMaxTokens}
+            />
 
-          <AgentModelSettings
-            selectedProvider={selectedProvider}
-            selectedModel={selectedModel}
-            temperature={temperature}
-            maxTokens={maxTokens}
-            onProviderChange={setSelectedProvider}
-            onModelChange={setSelectedModel}
-            onTemperatureChange={setTemperature}
-            onMaxTokensChange={setMaxTokens}
-          />
+            <AgentToolsSelection
+              selectedKnowledgebase={selectedKnowledgebase}
+              selectedTools={selectedTools}
+              onKnowledgebaseChange={setSelectedKnowledgebase}
+              onToolsChange={setSelectedTools}
+            />
 
-          <AgentToolsSelection
-            selectedKnowledgebase={selectedKnowledgebase}
-            selectedTools={selectedTools}
-            onKnowledgebaseChange={setSelectedKnowledgebase}
-            onToolsChange={setSelectedTools}
-          />
-
-          <AgentActionButtons
-            onGenerate={handleGenerateWithAI}
-            loading={loading}
-          />
-        </div>
+            <AgentActionButtons
+              onGenerate={handleGenerateWithAI}
+              loading={loading}
+            />
+          </div>
+        </ScrollArea>
       </DialogContent>
     </Dialog>
   );
