@@ -1,4 +1,3 @@
-
 import { useCallback, useState } from 'react';
 import {
   ReactFlow,
@@ -23,42 +22,44 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import '@xyflow/react/dist/style.css';
 
-// Define base interface for node data
-interface BaseNodeData {
+// Base type that ensures all node data includes the Record<string, unknown> constraint
+type BaseNodeFields = {
   label: string;
   description?: string;
-}
+  [key: string]: unknown;
+};
 
-// Define specific node data types
-interface InputNodeData extends BaseNodeData {
+// Node-specific data types
+interface InputNodeData extends BaseNodeFields {
   type: 'input';
   inputType: 'text' | 'file' | 'json';
 }
 
-interface LLMNodeData extends BaseNodeData {
+interface LLMNodeData extends BaseNodeFields {
   type: 'llm-openai' | 'llm-anthropic' | 'llm-perplexity';
   model: string;
   systemPrompt: string;
   temperature: number;
 }
 
-interface KBNodeData extends BaseNodeData {
+interface KBNodeData extends BaseNodeFields {
   type: 'kb-reader' | 'kb-writer' | 'kb-search';
   knowledgeBase: string;
   searchType?: 'semantic' | 'keyword' | 'hybrid';
 }
 
-interface LogicNodeData extends BaseNodeData {
+interface LogicNodeData extends BaseNodeFields {
   type: 'logic-condition';
   conditionType: 'equals' | 'contains' | 'greater-than' | 'less-than';
   value: string;
 }
 
-// Union type for all possible node data types
-type NodeData = InputNodeData | LLMNodeData | KBNodeData | LogicNodeData | (BaseNodeData & { type: string });
+interface DefaultNodeData extends BaseNodeFields {
+  type: string;
+}
 
-// Type for our custom node
-type CustomNode = Node<NodeData>;
+// Union type for all possible node data types
+type NodeData = InputNodeData | LLMNodeData | KBNodeData | LogicNodeData | DefaultNodeData;
 
 const nodeTypes = {
   input: BaseNode,
@@ -100,10 +101,10 @@ const nodeTypes = {
 
 export function WorkflowBuilder() {
   const { id } = useParams<{ id: string }>();
-  const [nodes, setNodes, onNodesChange] = useNodesState<Node<NodeData>>([]);
+  const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [activeCategory, setActiveCategory] = useState('general');
-  const [selectedNode, setSelectedNode] = useState<Node<NodeData> | null>(null);
+  const [selectedNode, setSelectedNode] = useState<Node | null>(null);
 
   const { data: workflow, isLoading } = useQuery({
     queryKey: ['workflow', id],
@@ -143,11 +144,11 @@ export function WorkflowBuilder() {
         y: event.clientY - reactFlowBounds.top,
       };
 
-      const newNode: Node<NodeData> = {
+      const newNode: Node = {
         id: crypto.randomUUID(),
         type,
         position,
-        data: { label: type.split('-').pop() || type, type },
+        data: { type, label: type.split('-').pop() || type } as NodeData,
       };
 
       setNodes((nds) => nds.concat(newNode));
@@ -155,12 +156,7 @@ export function WorkflowBuilder() {
     [setNodes]
   );
 
-  const onDragOver = useCallback((event: React.DragEvent) => {
-    event.preventDefault();
-    event.dataTransfer.dropEffect = 'move';
-  }, []);
-
-  const onNodeClick = useCallback((_: React.MouseEvent, node: Node<NodeData>) => {
+  const onNodeClick = useCallback((event: React.MouseEvent, node: Node) => {
     setSelectedNode(node);
   }, []);
 
@@ -170,7 +166,7 @@ export function WorkflowBuilder() {
         if (node.id === nodeId) {
           return {
             ...node,
-            data: { ...node.data, ...newData },
+            data: { ...node.data, ...newData } as NodeData,
           };
         }
         return node;
@@ -178,10 +174,12 @@ export function WorkflowBuilder() {
     );
   };
 
-  const renderNodeConfig = (node: Node<NodeData>) => {
+  const renderNodeConfig = (node: Node) => {
+    const nodeData = node.data as NodeData;
+
     switch (node.type) {
       case 'input': {
-        const data = node.data as InputNodeData;
+        const data = nodeData as InputNodeData;
         return (
           <div className="space-y-4">
             <div className="space-y-2">
@@ -225,7 +223,7 @@ export function WorkflowBuilder() {
       case 'llm-openai':
       case 'llm-anthropic':
       case 'llm-perplexity': {
-        const data = node.data as LLMNodeData;
+        const data = nodeData as LLMNodeData;
         return (
           <div className="space-y-4">
             <div className="space-y-2">
@@ -274,7 +272,7 @@ export function WorkflowBuilder() {
                 min="0" 
                 max="2" 
                 step="0.1"
-                value={data.temperature} 
+                value={String(data.temperature)}
                 onChange={(e) => updateNodeData(node.id, { temperature: parseFloat(e.target.value) })} 
               />
             </div>
@@ -285,7 +283,7 @@ export function WorkflowBuilder() {
       case 'kb-reader':
       case 'kb-writer':
       case 'kb-search': {
-        const data = node.data as KBNodeData;
+        const data = nodeData as KBNodeData;
         return (
           <div className="space-y-4">
             <div className="space-y-2">
@@ -328,12 +326,18 @@ export function WorkflowBuilder() {
         );
       }
 
-      case 'logic-condition':
+      case 'logic-condition': {
+        const data = nodeData as LogicNodeData;
         return (
           <div className="space-y-4">
             <div className="space-y-2">
               <Label>Condition Type</Label>
-              <Select onValueChange={(value) => updateNodeData(node.id, { conditionType: value })} defaultValue={node.data.conditionType}>
+              <Select 
+                value={data.conditionType} 
+                onValueChange={(value: 'equals' | 'contains' | 'greater-than' | 'less-than') => 
+                  updateNodeData(node.id, { conditionType: value })
+                }
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select condition type" />
                 </SelectTrigger>
@@ -348,15 +352,14 @@ export function WorkflowBuilder() {
             <div className="space-y-2">
               <Label>Value</Label>
               <Input 
-                value={node.data.value || ''} 
+                value={String(data.value)} 
                 onChange={(e) => updateNodeData(node.id, { value: e.target.value })} 
                 placeholder="Enter comparison value"
               />
             </div>
           </div>
         );
-
-      // Add more node type configurations as needed...
+      }
 
       default: {
         return (
@@ -364,7 +367,7 @@ export function WorkflowBuilder() {
             <div className="space-y-2">
               <Label>Label</Label>
               <Input 
-                value={node.data.label} 
+                value={nodeData.label} 
                 onChange={(e) => updateNodeData(node.id, { label: e.target.value })} 
                 placeholder="Enter label"
               />
@@ -372,7 +375,7 @@ export function WorkflowBuilder() {
             <div className="space-y-2">
               <Label>Description</Label>
               <Textarea 
-                value={node.data.description || ''} 
+                value={nodeData.description || ''} 
                 onChange={(e) => updateNodeData(node.id, { description: e.target.value })} 
                 placeholder="Enter description"
               />
@@ -422,7 +425,7 @@ export function WorkflowBuilder() {
         {selectedNode && (
           <div className="w-80 border-l p-4 bg-background">
             <h3 className="text-lg font-semibold mb-4">
-              {selectedNode.data.label || selectedNode.type} Configuration
+              {(selectedNode.data as NodeData).label || selectedNode.type} Configuration
             </h3>
             {renderNodeConfig(selectedNode)}
           </div>
