@@ -1,4 +1,6 @@
 
+import { Json } from "@/integrations/supabase/types";
+
 export interface ApiConfig {
   method: string;
   url: string;
@@ -14,7 +16,7 @@ export interface CustomTool {
   instruction: string;
   iconUrl: string;
   tags: string[];
-  apiConfig?: ApiConfig; // Made optional to match GenerateToolResponse
+  apiConfig?: ApiConfig;
 }
 
 export interface GenerateToolResponse {
@@ -26,12 +28,11 @@ export interface GenerateToolResponse {
   apiConfig?: Partial<ApiConfig>;
 }
 
-// Type for the database schema
 export interface ToolData {
   name: string;
-  description: string;
-  icon_url: string;
-  instruction: string;
-  tags: string[];
-  api_config: Record<string, unknown>;
+  description: string | null;
+  icon_url: string | null;
+  instruction: string | null;
+  tags: string[] | null;
+  api_config: Json;
 }

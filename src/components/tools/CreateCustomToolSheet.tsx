@@ -34,7 +34,6 @@ export function CreateCustomToolSheet() {
       if (response.error) throw new Error('Failed to generate configuration');
       
       const data = response.data as GenerateToolResponse;
-      // Convert GenerateToolResponse to Partial<CustomTool>
       setTool({
         name: data.name,
         description: data.description,
@@ -78,18 +77,11 @@ export function CreateCustomToolSheet() {
     try {
       const toolData: ToolData = {
         name: tool.name || '',
-        description: tool.description || '',
-        icon_url: tool.iconUrl || '',
-        instruction: tool.instruction || '',
-        tags: tool.tags || [],
-        api_config: {
-          method: apiConfig.method,
-          url: apiConfig.url,
-          headers: apiConfig.headers,
-          queryParams: apiConfig.queryParams,
-          body: apiConfig.body,
-          isFormData: apiConfig.isFormData,
-        },
+        description: tool.description || null,
+        icon_url: tool.iconUrl || null,
+        instruction: tool.instruction || null,
+        tags: tool.tags || null,
+        api_config: apiConfig as unknown as Json,
       };
 
       const { error } = await supabase.from('tools').insert(toolData);
