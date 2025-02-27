@@ -11,7 +11,16 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { UserCircle } from "lucide-react";
+import { 
+  UserCircle,
+  Settings,
+  HelpCircle,
+  LayoutDashboard,
+  Shield,
+  Book,
+  Key,
+  FileText
+} from "lucide-react";
 
 export function GlobalNav() {
   const navigate = useNavigate();
@@ -61,10 +70,32 @@ export function GlobalNav() {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48">
                   <DropdownMenuItem onSelect={() => navigate('/dashboard')}>
+                    <LayoutDashboard className="mr-2 h-4 w-4" />
                     Dashboard
                   </DropdownMenuItem>
                   <DropdownMenuItem onSelect={() => navigate('/admin')}>
+                    <Shield className="mr-2 h-4 w-4" />
                     Admin Panel
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => navigate('/tools')}>
+                    <Settings className="mr-2 h-4 w-4" />
+                    Tools
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => navigate('/agents')}>
+                    <Key className="mr-2 h-4 w-4" />
+                    Agents
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => navigate('/workflows')}>
+                    <FileText className="mr-2 h-4 w-4" />
+                    Workflows
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => navigate('/knowledgebase')}>
+                    <Book className="mr-2 h-4 w-4" />
+                    Knowledge Base
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => navigate('/docs')}>
+                    <HelpCircle className="mr-2 h-4 w-4" />
+                    Documentation
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onSelect={handleSignOut}>
