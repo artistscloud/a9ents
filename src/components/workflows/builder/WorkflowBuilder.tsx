@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import {
   ReactFlow,
   addEdge,
@@ -22,17 +22,27 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import '@xyflow/react/dist/style.css';
 
-// Base type that ensures all node data includes the Record<string, unknown> constraint
+// Define input/output types
+type DataType = 'text' | 'audio' | 'image' | 'json' | 'video' | 'file';
+
+interface IOField {
+  name: string;
+  type: DataType;
+  description?: string;
+}
+
 type BaseNodeFields = {
   label: string;
   description?: string;
+  inputs?: IOField[];
+  outputs?: IOField[];
   [key: string]: unknown;
 };
 
-// Node-specific data types
 interface InputNodeData extends BaseNodeFields {
   type: 'input';
-  inputType: 'text' | 'file' | 'json';
+  inputType: DataType;
+  outputField: string;
 }
 
 interface LLMNodeData extends BaseNodeFields {
@@ -40,25 +50,32 @@ interface LLMNodeData extends BaseNodeFields {
   model: string;
   systemPrompt: string;
   temperature: number;
+  inputFields: string[];
+  outputFields: string[];
 }
 
 interface KBNodeData extends BaseNodeFields {
   type: 'kb-reader' | 'kb-writer' | 'kb-search';
   knowledgeBase: string;
   searchType?: 'semantic' | 'keyword' | 'hybrid';
+  inputFields: string[];
+  outputFields: string[];
 }
 
 interface LogicNodeData extends BaseNodeFields {
   type: 'logic-condition';
   conditionType: 'equals' | 'contains' | 'greater-than' | 'less-than';
   value: string;
+  inputFields: string[];
+  outputFields: string[];
 }
 
 interface DefaultNodeData extends BaseNodeFields {
   type: string;
+  inputFields: string[];
+  outputFields: string[];
 }
 
-// Union type for all possible node data types
 type NodeData = InputNodeData | LLMNodeData | KBNodeData | LogicNodeData | DefaultNodeData;
 
 const nodeTypes = {
@@ -97,6 +114,26 @@ const nodeTypes = {
   'integration-grid': BaseNode,
   'trigger-webhook': BaseNode,
   'trigger-schedule': BaseNode,
+};
+
+const defaultInputs: Record<string, IOField[]> = {
+  'input': [],
+  'output': [{ name: 'output', type: 'text', description: 'Output value' }],
+  'llm-openai': [
+    { name: 'prompt', type: 'text', description: 'Input prompt' },
+    { name: 'context', type: 'text', description: 'Additional context' }
+  ],
+  // Add more default inputs for other node types
+};
+
+const defaultOutputs: Record<string, IOField[]> = {
+  'input': [{ name: 'value', type: 'text', description: 'Input value' }],
+  'output': [],
+  'llm-openai': [
+    { name: 'response', type: 'text', description: 'LLM response' },
+    { name: 'tokens', type: 'json', description: 'Token usage' }
+  ],
+  // Add more default outputs for other node types
 };
 
 export function WorkflowBuilder() {
@@ -155,7 +192,12 @@ export function WorkflowBuilder() {
         id: crypto.randomUUID(),
         type,
         position,
-        data: { type, label: type.split('-').pop() || type } as NodeData,
+        data: {
+          type,
+          label: type.split('-').pop() || type,
+          inputs: defaultInputs[type] || [],
+          outputs: defaultOutputs[type] || [],
+        } as NodeData,
       };
 
       setNodes((nds) => nds.concat(newNode));
@@ -193,8 +235,11 @@ export function WorkflowBuilder() {
               <Label>Input Type</Label>
               <Select 
                 value={data.inputType} 
-                onValueChange={(value: 'text' | 'file' | 'json') => 
-                  updateNodeData(node.id, { inputType: value })
+                onValueChange={(value: DataType) => 
+                  updateNodeData(node.id, { 
+                    inputType: value,
+                    outputs: [{ name: 'value', type: value, description: `Input ${value}` }]
+                  })
                 }
               >
                 <SelectTrigger>
@@ -202,10 +247,21 @@ export function WorkflowBuilder() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="text">Text</SelectItem>
-                  <SelectItem value="file">File</SelectItem>
+                  <SelectItem value="audio">Audio</SelectItem>
+                  <SelectItem value="image">Image</SelectItem>
                   <SelectItem value="json">JSON</SelectItem>
+                  <SelectItem value="video">Video</SelectItem>
+                  <SelectItem value="file">File</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Output Field Name</Label>
+              <Input 
+                value={data.outputField || ''} 
+                onChange={(e) => updateNodeData(node.id, { outputField: e.target.value })} 
+                placeholder="Enter output field name"
+              />
             </div>
             <div className="space-y-2">
               <Label>Label</Label>
@@ -387,6 +443,32 @@ export function WorkflowBuilder() {
                 placeholder="Enter description"
               />
             </div>
+            {nodeData.inputs && nodeData.inputs.length > 0 && (
+              <div className="space-y-2">
+                <Label>Input Fields</Label>
+                <div className="text-sm text-muted-foreground">
+                  {nodeData.inputs.map((input, idx) => (
+                    <div key={idx} className="flex items-center gap-2">
+                      <span>{input.name}</span>
+                      <span className="text-xs">({input.type})</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            {nodeData.outputs && nodeData.outputs.length > 0 && (
+              <div className="space-y-2">
+                <Label>Output Fields</Label>
+                <div className="text-sm text-muted-foreground">
+                  {nodeData.outputs.map((output, idx) => (
+                    <div key={idx} className="flex items-center gap-2">
+                      <span>{output.name}</span>
+                      <span className="text-xs">({output.type})</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         );
       }
