@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -19,7 +18,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ChevronDown, HelpCircle, LayoutDashboard, Settings, UserCircle, Book, Key } from "lucide-react";
+import { Download, FileText, HelpCircle, LayoutDashboard, Settings, UserCircle, Book, Key } from "lucide-react";
 
 export function GlobalNav() {
   const navigate = useNavigate();
@@ -105,6 +104,10 @@ export function GlobalNav() {
                           <Book className="mr-2 h-4 w-4" />
                           Documentation
                         </DropdownMenuItem>
+                        <DropdownMenuItem onSelect={() => navigate('/user-manual')}>
+                          <FileText className="mr-2 h-4 w-4" />
+                          User Manual
+                        </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DialogTrigger asChild>
                           <DropdownMenuItem>
@@ -121,7 +124,6 @@ export function GlobalNav() {
                           Sign Out
                         </DropdownMenuItem>
                       </DropdownMenuContent>
-                    </DropdownMenu>
 
                     <DialogContent className="sm:max-w-[500px]">
                       <DialogHeader>
