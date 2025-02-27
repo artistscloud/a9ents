@@ -1,3 +1,4 @@
+
 import { useCallback, useState } from 'react';
 import {
   ReactFlow,
@@ -22,35 +23,41 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import '@xyflow/react/dist/style.css';
 
-// Define types for node data
+// Define base interface for node data
 interface BaseNodeData {
   label: string;
   description?: string;
 }
 
+// Define specific node data types
 interface InputNodeData extends BaseNodeData {
+  type: 'input';
   inputType: 'text' | 'file' | 'json';
 }
 
 interface LLMNodeData extends BaseNodeData {
+  type: 'llm-openai' | 'llm-anthropic' | 'llm-perplexity';
   model: string;
   systemPrompt: string;
   temperature: number;
 }
 
 interface KBNodeData extends BaseNodeData {
+  type: 'kb-reader' | 'kb-writer' | 'kb-search';
   knowledgeBase: string;
   searchType?: 'semantic' | 'keyword' | 'hybrid';
 }
 
 interface LogicNodeData extends BaseNodeData {
+  type: 'logic-condition';
   conditionType: 'equals' | 'contains' | 'greater-than' | 'less-than';
   value: string;
 }
 
-type NodeData = BaseNodeData | InputNodeData | LLMNodeData | KBNodeData | LogicNodeData;
+// Union type for all possible node data types
+type NodeData = InputNodeData | LLMNodeData | KBNodeData | LogicNodeData | (BaseNodeData & { type: string });
 
-// Define a type for our custom node
+// Type for our custom node
 type CustomNode = Node<NodeData>;
 
 const nodeTypes = {
@@ -93,10 +100,10 @@ const nodeTypes = {
 
 export function WorkflowBuilder() {
   const { id } = useParams<{ id: string }>();
-  const [nodes, setNodes, onNodesChange] = useNodesState<NodeData>([]);
+  const [nodes, setNodes, onNodesChange] = useNodesState<Node<NodeData>>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [activeCategory, setActiveCategory] = useState('general');
-  const [selectedNode, setSelectedNode] = useState<CustomNode | null>(null);
+  const [selectedNode, setSelectedNode] = useState<Node<NodeData> | null>(null);
 
   const { data: workflow, isLoading } = useQuery({
     queryKey: ['workflow', id],
@@ -136,11 +143,11 @@ export function WorkflowBuilder() {
         y: event.clientY - reactFlowBounds.top,
       };
 
-      const newNode: Node = {
+      const newNode: Node<NodeData> = {
         id: crypto.randomUUID(),
         type,
         position,
-        data: { label: type.split('-').pop() || type },
+        data: { label: type.split('-').pop() || type, type },
       };
 
       setNodes((nds) => nds.concat(newNode));
@@ -153,7 +160,7 @@ export function WorkflowBuilder() {
     event.dataTransfer.dropEffect = 'move';
   }, []);
 
-  const onNodeClick = useCallback((event: React.MouseEvent, node: Node) => {
+  const onNodeClick = useCallback((_: React.MouseEvent, node: Node<NodeData>) => {
     setSelectedNode(node);
   }, []);
 
@@ -171,7 +178,7 @@ export function WorkflowBuilder() {
     );
   };
 
-  const renderNodeConfig = (node: CustomNode) => {
+  const renderNodeConfig = (node: Node<NodeData>) => {
     switch (node.type) {
       case 'input': {
         const data = node.data as InputNodeData;
@@ -352,13 +359,12 @@ export function WorkflowBuilder() {
       // Add more node type configurations as needed...
 
       default: {
-        const data = node.data as BaseNodeData;
         return (
           <div className="space-y-4">
             <div className="space-y-2">
               <Label>Label</Label>
               <Input 
-                value={data.label} 
+                value={node.data.label} 
                 onChange={(e) => updateNodeData(node.id, { label: e.target.value })} 
                 placeholder="Enter label"
               />
@@ -366,7 +372,7 @@ export function WorkflowBuilder() {
             <div className="space-y-2">
               <Label>Description</Label>
               <Textarea 
-                value={data.description || ''} 
+                value={node.data.description || ''} 
                 onChange={(e) => updateNodeData(node.id, { description: e.target.value })} 
                 placeholder="Enter description"
               />
@@ -416,7 +422,7 @@ export function WorkflowBuilder() {
         {selectedNode && (
           <div className="w-80 border-l p-4 bg-background">
             <h3 className="text-lg font-semibold mb-4">
-              {(selectedNode.data as BaseNodeData).label || selectedNode.type} Configuration
+              {selectedNode.data.label || selectedNode.type} Configuration
             </h3>
             {renderNodeConfig(selectedNode)}
           </div>
