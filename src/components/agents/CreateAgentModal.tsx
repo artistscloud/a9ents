@@ -97,13 +97,13 @@ export function CreateAgentModal({ open, onOpenChange }: CreateAgentModalProps) 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] p-0">
+      <DialogContent className="max-h-[90vh] sm:max-w-[600px] p-0">
         <DialogHeader className="p-6 pb-0">
           <DialogTitle>New agent</DialogTitle>
         </DialogHeader>
         
-        <ScrollArea className="px-6 py-4 h-full">
-          <div className="space-y-6 pr-4">
+        <ScrollArea className="h-full">
+          <div className="space-y-6 p-6">
             <AgentDescriptionInput
               jobDescription={jobDescription}
               exampleOutput={exampleOutput}
