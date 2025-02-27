@@ -1,4 +1,3 @@
-
 import { BrowserRouter as Router, Routes, Route, Outlet } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -14,6 +13,8 @@ import Workflows from "@/pages/Workflows";
 import Knowledgebase from "@/pages/Knowledgebase";
 import Dashboard from "@/pages/Index";
 import NotFound from "@/pages/NotFound";
+import Api from "@/pages/Api";
+import Documentation from "@/pages/Documentation";
 import "./App.css";
 
 const queryClient = new QueryClient();
@@ -36,6 +37,8 @@ function App() {
               <Route path="/workflows" element={<Workflows />} />
               <Route path="/workflows/:id" element={<Workflows />} />
               <Route path="/knowledgebase" element={<Knowledgebase />} />
+              <Route path="/api" element={<Api />} />
+              <Route path="/docs" element={<Documentation />} />
               <Route path="*" element={<NotFound />} />
             </Route>
           </Routes>

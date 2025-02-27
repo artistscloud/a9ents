@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ChevronDown, HelpCircle, LayoutDashboard, Settings, UserCircle } from "lucide-react";
+import { Book, Key } from "lucide-react";
 
 export function GlobalNav() {
   const navigate = useNavigate();
@@ -96,6 +97,14 @@ export function GlobalNav() {
                           <LayoutDashboard className="mr-2 h-4 w-4" />
                           Dashboard
                         </DropdownMenuItem>
+                        <DropdownMenuItem onSelect={() => navigate('/api')}>
+                          <Key className="mr-2 h-4 w-4" />
+                          API
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onSelect={() => navigate('/docs')}>
+                          <Book className="mr-2 h-4 w-4" />
+                          Documentation
+                        </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DialogTrigger asChild>
                           <DropdownMenuItem>
@@ -112,7 +121,6 @@ export function GlobalNav() {
                           Sign Out
                         </DropdownMenuItem>
                       </DropdownMenuContent>
-                    </DropdownMenu>
 
                     <DialogContent className="sm:max-w-[500px]">
                       <DialogHeader>
