@@ -71,7 +71,7 @@ export function BaseNode({ id, data, selected }: BaseNodeProps) {
                 <span className="text-xs text-blue-500 bg-blue-100 px-1 rounded">Text</span>
               </Label>
               <Textarea 
-                placeholder='Type "{{" to utilize variables&#10;E.g., Question: {{input_0.text}}'
+                placeholder="Type '{{' to utilize variables. E.g., Question: {{input_0.text}}"
                 value={data.prompt}
                 className="resize-none min-h-[60px]"
               />
@@ -111,7 +111,7 @@ export function BaseNode({ id, data, selected }: BaseNodeProps) {
                 <span className="text-xs text-blue-500 bg-blue-100 px-1 rounded">Text</span>
               </Label>
               <Input 
-                placeholder='Type "{{" to utilize variables'
+                placeholder="Type '{{' to utilize variables"
                 value={data.fileName}
               />
             </div>
