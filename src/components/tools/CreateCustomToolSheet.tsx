@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -92,15 +93,13 @@ export function CreateCustomToolSheet() {
 
   const handleGenerateWithAI = async () => {
     try {
-      const response = await fetch('/api/generate-tool-config', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sampleRequest, purpose }),
+      const response = await supabase.functions.invoke('generate-tool-config', {
+        body: { sampleRequest, purpose },
       });
       
-      if (!response.ok) throw new Error('Failed to generate configuration');
+      if (response.error) throw new Error('Failed to generate configuration');
       
-      const data = await response.json();
+      const data = response.data;
       setTool(data);
       setStep('configuration');
     } catch (error) {
@@ -133,15 +132,24 @@ export function CreateCustomToolSheet() {
     reader.readAsText(file);
   };
 
-  const handleCreate = async (config: ApiConfig) => {
+  const handleCreate = async (apiConfig: ApiConfig) => {
     try {
+      // Ensure we have all required fields with default values
+      const completeConfig: ApiConfig = {
+        method: apiConfig.method || 'GET',
+        url: apiConfig.url || '',
+        headers: apiConfig.headers || {},
+        queryParams: apiConfig.queryParams || {},
+        body: apiConfig.body || '',
+      };
+
       const { error } = await supabase.from('tools').insert({
-        name: tool.name,
-        description: tool.description,
+        name: tool.name || '',
+        description: tool.description || '',
         icon_url: tool.iconUrl,
-        instruction: tool.instruction,
-        tags: tool.tags,
-        function: JSON.stringify(config),
+        instruction: tool.instruction || '',
+        tags: tool.tags || [],
+        api_config: completeConfig,
       });
 
       if (error) throw error;
@@ -207,7 +215,7 @@ export function CreateCustomToolSheet() {
     }
 
     if (step === 'configuration' && tool) {
-      return <ApiConfigurationForm tool={tool} onCreate={handleCreate} />;
+      return <APIConfigurationForm tool={tool} onCreate={handleCreate} />;
     }
 
     return null;
@@ -233,239 +241,3 @@ export function CreateCustomToolSheet() {
     </Sheet>
   );
 }
-
-interface ApiConfigurationFormProps {
-  tool: Partial<CustomTool>;
-  onCreate: (config: ApiConfig) => Promise<void>;
-}
-
-const ApiConfigurationForm: React.FC<ApiConfigurationFormProps> = ({
-  tool,
-  onCreate,
-}) => {
-  const form = useForm<z.infer<typeof customToolSchema>>({
-    resolver: zodResolver(customToolSchema),
-    defaultValues: {
-      name: tool.name || '',
-      description: tool.description || '',
-      instruction: tool.instruction || '',
-      iconUrl: tool.iconUrl || '',
-      tags: tool.tags || [],
-      apiConfig: {
-        method: tool.apiConfig?.method || 'GET',
-        url: tool.apiConfig?.url || '',
-        headers: tool.apiConfig?.headers || {},
-        queryParams: tool.apiConfig?.queryParams || {},
-        body: tool.apiConfig?.body || '',
-      },
-    },
-  });
-
-  const onSubmit = async (values: z.infer<typeof customToolSchema>) => {
-    await onCreate(values.apiConfig);
-  };
-
-  return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <FormField
-          control={form.control}
-          name="name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Name</FormLabel>
-              <FormControl>
-                <Input placeholder="Tool Name" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="description"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Description</FormLabel>
-              <FormControl>
-                <Textarea
-                  placeholder="A brief description of the tool"
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="instruction"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Instruction</FormLabel>
-              <FormControl>
-                <Textarea
-                  placeholder="How to use this tool"
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="iconUrl"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Icon URL</FormLabel>
-              <FormControl>
-                <Input placeholder="URL to the tool's icon" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <Separator />
-        <Accordion type="single" collapsible>
-          <AccordionItem value="api_config">
-            <AccordionTrigger>API Configuration</AccordionTrigger>
-            <AccordionContent>
-              <div className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="apiConfig.method"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Method</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a method" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="GET">GET</SelectItem>
-                          <SelectItem value="POST">POST</SelectItem>
-                          <SelectItem value="PUT">PUT</SelectItem>
-                          <SelectItem value="DELETE">DELETE</SelectItem>
-                          <SelectItem value="PATCH">PATCH</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="apiConfig.url"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>URL</FormLabel>
-                      <FormControl>
-                        <Input placeholder="API Endpoint URL" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="apiConfig.headers"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Headers</FormLabel>
-                      <FormDescription>
-                        Enter headers as key-value pairs.
-                      </FormDescription>
-                      {Object.entries(field.value || {}).map(([key, value]) => (
-                        <div key={key} className="flex items-center space-x-2">
-                          <Input
-                            placeholder="Header Key"
-                            value={key}
-                            onChange={() => {}}
-                            disabled
-                          />
-                          <Input
-                            placeholder="Header Value"
-                            value={value}
-                            onChange={() => {}}
-                            disabled
-                          />
-                        </div>
-                      ))}
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          // Implement adding new header logic here
-                        }}
-                      >
-                        Add Header
-                      </Button>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="apiConfig.queryParams"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Query Parameters</FormLabel>
-                      <FormDescription>
-                        Enter query parameters as key-value pairs.
-                      </FormDescription>
-                      {Object.entries(field.value || {}).map(([key, value]) => (
-                        <div key={key} className="flex items-center space-x-2">
-                          <Input
-                            placeholder="Parameter Key"
-                            value={key}
-                            onChange={() => {}}
-                            disabled
-                          />
-                          <Input
-                            placeholder="Parameter Value"
-                            value={value}
-                            onChange={() => {}}
-                            disabled
-                          />
-                        </div>
-                      ))}
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          // Implement adding new query parameter logic here
-                        }}
-                      >
-                        Add Parameter
-                      </Button>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="apiConfig.body"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Body</FormLabel>
-                      <FormControl>
-                        <Textarea placeholder="Request Body" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-            </AccordionContent>
-          </AccordionItem>
-        </Accordion>
-        <Button type="submit">Create Tool</Button>
-      </form>
-    </Form>
-  );
-};
