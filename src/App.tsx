@@ -12,6 +12,7 @@ import Tools from "@/pages/Tools";
 import Agents from "@/pages/Agents";
 import Workflows from "@/pages/Workflows";
 import Knowledgebase from "@/pages/Knowledgebase";
+import Dashboard from "@/pages/Index";
 import NotFound from "@/pages/NotFound";
 import "./App.css";
 
@@ -29,6 +30,7 @@ function App() {
               <Route path="/signup" element={<SignUp />} />
             </Route>
             <Route element={<MainLayout>{<Outlet />}</MainLayout>}>
+              <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/tools" element={<Tools />} />
               <Route path="/agents" element={<Agents />} />
               <Route path="/workflows" element={<Workflows />} />
