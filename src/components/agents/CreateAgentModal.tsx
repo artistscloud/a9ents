@@ -160,7 +160,6 @@ export function CreateAgentModal({ open, onOpenChange }: CreateAgentModalProps) 
         .insert([{
           name: jobDescription.split('\n')[0] || 'New Agent',
           description: jobDescription,
-          tools: selectedTools,
           knowledgebase_id: selectedKnowledgebase || null,
           workflow_id: workflowId,
           selected_tools: selectedTools,
@@ -168,7 +167,8 @@ export function CreateAgentModal({ open, onOpenChange }: CreateAgentModalProps) 
             provider: selectedProvider,
             model: selectedModel,
             temperature: temperature[0],
-            maxTokens: maxTokens[0]
+            maxTokens: maxTokens[0],
+            configuredTools: selectedTools // Include selected tools within the tools object
           }
         }])
         .select()
