@@ -109,6 +109,8 @@ export function WorkflowBuilder() {
   const { data: workflow, isLoading } = useQuery({
     queryKey: ['workflow', id],
     queryFn: async () => {
+      if (!id) return null;
+      
       const { data, error } = await supabase
         .from('workflows')
         .select('*')
@@ -128,6 +130,11 @@ export function WorkflowBuilder() {
   const onDragStart = useCallback((event: React.DragEvent, nodeType: string) => {
     event.dataTransfer.setData('application/reactflow', nodeType);
     event.dataTransfer.effectAllowed = 'move';
+  }, []);
+
+  const onDragOver = useCallback((event: React.DragEvent) => {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'move';
   }, []);
 
   const onDrop = useCallback(
@@ -385,6 +392,10 @@ export function WorkflowBuilder() {
       }
     }
   };
+
+  if (!id) {
+    return <div>Invalid workflow ID</div>;
+  }
 
   if (isLoading) {
     return <div>Loading workflow...</div>;
