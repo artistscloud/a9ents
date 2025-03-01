@@ -34,8 +34,16 @@ export function GlobalNav() {
   }, []);
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    navigate('/');
+    setLoading(true);
+    try {
+      await supabase.auth.signOut();
+      setUser(null);
+      navigate('/');
+    } catch (error) {
+      console.error('Sign out error:', error);
+    } finally {
+      setLoading(false);
+    }
   };
   
   return (

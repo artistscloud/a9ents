@@ -2,6 +2,8 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { User } from "@supabase/supabase-js";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/components/ui/use-toast";
 
 interface AuthButtonsProps {
   user: User | null;
@@ -11,6 +13,30 @@ interface AuthButtonsProps {
 
 export function AuthButtons({ user, loading, onSignOut }: AuthButtonsProps) {
   const navigate = useNavigate();
+  const { toast } = useToast();
+
+  const handleSignOut = async () => {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      
+      await onSignOut();
+      navigate('/');
+      
+      toast({
+        title: "Successfully signed out",
+        duration: 2000
+      });
+    } catch (error) {
+      console.error('Sign out error:', error);
+      toast({
+        title: "Error signing out",
+        description: "Please try again",
+        variant: "destructive",
+        duration: 3000
+      });
+    }
+  };
 
   if (loading) {
     return null;
@@ -22,7 +48,7 @@ export function AuthButtons({ user, loading, onSignOut }: AuthButtonsProps) {
         <span className="text-sm text-muted-foreground">
           {user.email}
         </span>
-        <Button variant="outline" onClick={onSignOut}>
+        <Button variant="outline" onClick={handleSignOut}>
           Sign Out
         </Button>
       </div>
