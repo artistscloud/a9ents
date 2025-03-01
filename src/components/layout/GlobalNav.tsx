@@ -43,21 +43,16 @@ export function GlobalNav() {
     const checkSession = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
-        console.log('Session:', session);
         setUser(session?.user ?? null);
 
         if (session?.user) {
-          const { data: profile, error } = await supabase
+          const { data: profile } = await supabase
             .from('profiles')
             .select('role')
             .eq('id', session.user.id)
             .single();
           
-          console.log('Profile:', profile);
-          console.log('Profile error:', error);
-          
           setIsAdmin(profile?.role === 'admin');
-          console.log('Is admin:', profile?.role === 'admin');
         }
         setLoading(false);
       } catch (error) {
@@ -69,22 +64,17 @@ export function GlobalNav() {
     checkSession();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      console.log('Auth state changed:', session);
       setUser(session?.user ?? null);
       
       if (session?.user) {
         try {
-          const { data: profile, error } = await supabase
+          const { data: profile } = await supabase
             .from('profiles')
             .select('role')
             .eq('id', session.user.id)
             .single();
           
-          console.log('Profile on auth change:', profile);
-          console.log('Profile error on auth change:', error);
-          
           setIsAdmin(profile?.role === 'admin');
-          console.log('Is admin on auth change:', profile?.role === 'admin');
         } catch (error) {
           console.error('Profile check error:', error);
         }
