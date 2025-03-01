@@ -36,11 +36,13 @@ export function GlobalNav() {
   const handleSignOut = async () => {
     setLoading(true);
     try {
-      await supabase.auth.signOut();
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
       setUser(null);
       navigate('/');
     } catch (error) {
       console.error('Sign out error:', error);
+      throw error; // Let AuthButtons handle the error toast
     } finally {
       setLoading(false);
     }

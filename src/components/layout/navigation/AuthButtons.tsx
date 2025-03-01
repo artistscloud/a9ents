@@ -2,7 +2,6 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { User } from "@supabase/supabase-js";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 
 interface AuthButtonsProps {
@@ -17,12 +16,7 @@ export function AuthButtons({ user, loading, onSignOut }: AuthButtonsProps) {
 
   const handleSignOut = async () => {
     try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
-      
       await onSignOut();
-      navigate('/');
-      
       toast({
         title: "Successfully signed out",
         duration: 2000
