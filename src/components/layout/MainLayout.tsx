@@ -21,21 +21,48 @@ const dashboardLinks = [
 
 export function MainLayout({ children }: MainLayoutProps) {
   const [user, setUser] = useState(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Check current auth status
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
       setUser(session?.user ?? null);
-    });
 
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', session.user.id)
+          .single();
+
+        setIsAdmin(profile?.role === 'admin');
+      }
+    };
+
+    checkAuth();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setUser(session?.user ?? null);
+      
+      if (session?.user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', session.user.id)
+          .single();
+
+        setIsAdmin(profile?.role === 'admin');
+      }
     });
 
     return () => subscription.unsubscribe();
   }, []);
+
+  const links = [...dashboardLinks];
+  if (isAdmin) {
+    links.push({ href: "/admin", label: "Admin" });
+  }
 
   return (
     <SidebarProvider>
@@ -46,7 +73,7 @@ export function MainLayout({ children }: MainLayoutProps) {
           <nav className="border-b bg-muted/40">
             <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
               <div className="flex h-14 items-center justify-center space-x-8">
-                {dashboardLinks.map((link) => (
+                {links.map((link) => (
                   <Link
                     key={link.href}
                     to={link.href}
