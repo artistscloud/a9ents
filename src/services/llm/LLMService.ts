@@ -36,7 +36,9 @@ export class LLMService {
       .select('*')
       .eq('is_enabled', true);
 
-    if (error) throw error;
+    if (error) {
+      throw new Error(`Failed to fetch LLM configurations: ${error.message}`);
+    }
 
     this.configCache.clear();
     configs.forEach((config) => {
@@ -56,39 +58,46 @@ export class LLMService {
     const enabledProviders = await this.getEnabledProviders();
     
     if (enabledProviders.length === 0) {
-      throw new Error('No LLM providers are currently enabled');
+      throw new Error('No LLM providers are currently enabled. Please configure a provider in the admin settings.');
     }
 
     let selectedProvider: LLMConfig;
     if (preferredProvider) {
       selectedProvider = enabledProviders.find(p => p.provider === preferredProvider);
       if (!selectedProvider) {
-        throw new Error(`Preferred provider ${preferredProvider} is not available`);
+        throw new Error(`Preferred provider ${preferredProvider} is not available or not enabled`);
       }
     } else {
-      // Default to first available provider
       selectedProvider = enabledProviders[0];
     }
 
-    // Call the appropriate provider's edge function
-    const response = await fetch(`/functions/llm-${selectedProvider.provider}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${selectedProvider.api_key}`,
-      },
-      body: JSON.stringify({ prompt }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Error calling LLM provider: ${await response.text()}`);
+    if (!selectedProvider.api_key) {
+      throw new Error(`Provider ${selectedProvider.provider} is not properly configured. Please add an API key in the admin settings.`);
     }
 
-    const data = await response.json();
-    return {
-      content: data.content,
-      provider: selectedProvider.provider,
-    };
+    try {
+      const response = await fetch(`/functions/llm-${selectedProvider.provider}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${selectedProvider.api_key}`,
+        },
+        body: JSON.stringify({ prompt }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Error calling LLM provider: ${errorText}`);
+      }
+
+      const data = await response.json();
+      return {
+        content: data.content,
+        provider: selectedProvider.provider,
+      };
+    } catch (error) {
+      throw new Error(`Failed to generate response: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
   }
 
   public async listAvailableProviders(): Promise<LLMProvider[]> {

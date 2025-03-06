@@ -130,7 +130,7 @@ export type Database = {
         Row: {
           api_key: string
           created_at: string
-          created_by: string
+          created_by: string | null
           id: string
           is_enabled: boolean | null
           provider: Database["public"]["Enums"]["llm_provider"]
@@ -139,7 +139,7 @@ export type Database = {
         Insert: {
           api_key: string
           created_at?: string
-          created_by: string
+          created_by?: string | null
           id?: string
           is_enabled?: boolean | null
           provider: Database["public"]["Enums"]["llm_provider"]
@@ -148,7 +148,7 @@ export type Database = {
         Update: {
           api_key?: string
           created_at?: string
-          created_by?: string
+          created_by?: string | null
           id?: string
           is_enabled?: boolean | null
           provider?: Database["public"]["Enums"]["llm_provider"]
