@@ -78,7 +78,7 @@ export function CreateAgentModal({ open, onOpenChange }: CreateAgentModalProps) 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] sm:max-w-[600px] overflow-visible">
+      <DialogContent className="max-h-[90vh] sm:max-w-[600px]">
         <DialogHeader className="px-6 pt-6">
           <DialogTitle>New agent</DialogTitle>
         </DialogHeader>
